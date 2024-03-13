@@ -1,6 +1,12 @@
 pandas
 numpy
+modelscope
 datasets
+torch
 transformers
+bitsandbytes
 peft
+trl
+sentencepiece
+protobuf
 ipykernel
