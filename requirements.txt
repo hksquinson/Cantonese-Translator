@@ -9,4 +9,6 @@ peft
 trl
 sentencepiece
 protobuf
+evaluate
+nltk
 ipykernel
