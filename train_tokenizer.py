@@ -22,7 +22,7 @@ special_tokens = ["<unk>", "<|startoftext|>", "<|endoftext|>", "<|im_start|>", "
                   "<|im_sep|>"]
                   
 trainer = BpeTrainer(special_tokens=special_tokens, vocab_size=20000, show_progress=True)
-yue_tokenizer.pre_tokenizer = Whitespace()
+# yue_tokenizer.pre_tokenizer = Whitespace()
 
 #find all text files in data directory
 all_files = []
@@ -33,6 +33,10 @@ for root, dirs, files in os.walk(DATA_DIRECTORY):
 
 # for file_name in all_files:
 #     print(f"Processing {file_name}")
+
+#shuffle all files
+all_files = np.array(all_files)
+np.random.shuffle(all_files)
             
 yue_tokenizer.train(files=all_files, trainer=trainer)
 
