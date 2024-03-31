@@ -1,0 +1,1 @@
+yue_tokenizer.pre_tokenizer = Whitespace()
