@@ -10,7 +10,7 @@ import bitsandbytes
 from modelscope import snapshot_download
 from datasets import Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer, DataCollatorForLanguageModeling
-from transformers import BitsAndBytesConfig
+from transformers import BitsAndBytesConfig, AdamW
 from trl import SFTTrainer
 from peft import get_peft_model, LoraConfig, TaskType
 
@@ -20,7 +20,8 @@ from custom_tokenizers import YueTokenizer
 
 gc.collect()
 torch.cuda.empty_cache()
-torch.cuda.is_available()
+
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 DATA_DIRECTORY = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/'
 
@@ -72,19 +73,37 @@ model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
 model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
 
 base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+print("Is CUDA available: ", torch.cuda.is_available())
+print("Current device: ", torch.cuda.current_device())
 
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 base_model = AutoModelForCausalLM.from_pretrained(
 	 '/root/autodl-tmp/01ai/Yi-6B-Chat',
 	 device_map=device,
-	 torch_dtype=torch.bfloat16,
+	 torch_dtype='auto',
     #  quantization_config=BitsAndBytesConfig(load_in_8bit=True),
 	#  trust_remote_code=True 
 )
 
+for param in base_model.parameters():
+  param.requires_grad = False  # freeze the model - train adapters later
+  if param.ndim == 1:
+    # cast the small parameters (e.g. layernorm) to fp32 for stability
+    param.data = param.data.to(torch.float32)
+
+base_model.gradient_checkpointing_enable()  # reduce number of stored activations
+base_model.enable_input_require_grads()
+
+base_model.resize_token_embeddings(len(tokenizer))
+
+class CastOutputToFloat(torch.nn.Sequential):
+  def forward(self, x): return super().forward(x).to(torch.float32)
+base_model.lm_head = CastOutputToFloat(base_model.lm_head)
 
 # # Prompt content: "hi"
 # messages = [
@@ -99,6 +118,8 @@ base_model = AutoModelForCausalLM.from_pretrained(
 # # Model response: "Hello! How can I assist you today?"
 # print(response)
 
+mono_dataset = mono_dataset.map(lambda samples: tokenizer(samples['text']), batched=True)
+
 # Prompt content: "hi"
 messages = [
     {"role": "user", "content": "hi"}
@@ -106,7 +127,8 @@ messages = [
 
 
 input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-output_ids = base_model.generate(input_ids.to('cuda'))
+with torch.cuda.amp.autocast():
+    output_ids = base_model.generate(input_ids.to('cuda'))
 response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
 
 # Model response: "Hello! How can I assist you today?"
@@ -122,11 +144,12 @@ lora_config = LoraConfig(
 )
 peft_model = get_peft_model(base_model, 
                             lora_config)
-peft_model = peft_model.to(device)
+
+# peft_model.resize_token_embeddings(len(tokenizer))
 
 peft_model.print_trainable_parameters()
 
-tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+# tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 print(len(tokenizer.get_vocab()))
 
@@ -160,28 +183,31 @@ prompts = formatting_prompts_func(mono_dataset[:10])
 for prompt in prompts:
     print(prompt)
 
-peft_model.resize_token_embeddings(len(tokenizer))
+# peft_model.resize_token_embeddings(len(tokenizer))
 
 training_args = TrainingArguments(
     learning_rate=1e-3, # Higher learning rate than full fine-tuning.
-    num_train_epochs=3,
+    num_train_epochs=2,
     logging_steps=100,
-    output_dir="/root/peft_model",
-    per_device_train_batch_size=1
+    output_dir="/root/autodl-tmp/peft_model",
+    logging_dir='/root/autodl-tmp/logs',
+    save_steps=10000,
 )
 
-# data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False, max_length=450)
 
-trainer = SFTTrainer(
+peft_model = peft_model.to(device)
+
+trainer = Trainer(
     model=peft_model,
     args=training_args,
     train_dataset=mono_dataset,
-    formatting_func=formatting_prompts_func,
     tokenizer=tokenizer,
-    # data_collator=data_collator,
+    data_collator=data_collator
 )
-trainer.train()
+with torch.cuda.amp.autocast():
+    trainer.train()
 
-trainer.model.save_pretrained("/root/peft_model")
+trainer.model.save_pretrained("/root/autodl-tmp/peft_model_pretrained")
 
 print(pd.DataFrame(trainer.state.log_history))
