@@ -1,1 +1,1 @@
-yue_tokenizer.pre_tokenizer = Whitespace()
+peft_model.resize_token_embeddings(len(tokenizer))
