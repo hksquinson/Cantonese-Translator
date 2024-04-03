@@ -1,5 +1,6 @@
 import os
 import gc
+import time
 
 import pandas as pd
 import numpy as np
@@ -58,8 +59,10 @@ print(len(yue_wiki_lines))
 print(len(openrice_lines))
 
 mono_dataset = Dataset.from_dict({
-    'text': yue_wiki_lines + openrice_lines
+    'text': openrice_lines + yue_wiki_lines
 })
+
+mono_dataset = mono_dataset.shuffle(seed=42)
 
 print(len(mono_dataset))
 
@@ -82,7 +85,7 @@ print("Current device: ", torch.cuda.current_device())
 
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
-base_model = AutoModelForCausalLM.from_pretrained(
+model = AutoModelForCausalLM.from_pretrained(
 	 '/root/autodl-tmp/01ai/Yi-6B-Chat',
 	 device_map=device,
 	 torch_dtype='auto',
@@ -90,20 +93,20 @@ base_model = AutoModelForCausalLM.from_pretrained(
 	#  trust_remote_code=True 
 )
 
-for param in base_model.parameters():
+for param in model.parameters():
   param.requires_grad = False  # freeze the model - train adapters later
   if param.ndim == 1:
     # cast the small parameters (e.g. layernorm) to fp32 for stability
     param.data = param.data.to(torch.float32)
 
-base_model.gradient_checkpointing_enable()  # reduce number of stored activations
-base_model.enable_input_require_grads()
+model.gradient_checkpointing_enable()  # reduce number of stored activations
+model.enable_input_require_grads()
 
-base_model.resize_token_embeddings(len(tokenizer))
+model.resize_token_embeddings(len(tokenizer))
 
 class CastOutputToFloat(torch.nn.Sequential):
   def forward(self, x): return super().forward(x).to(torch.float32)
-base_model.lm_head = CastOutputToFloat(base_model.lm_head)
+model.lm_head = CastOutputToFloat(model.lm_head)
 
 # # Prompt content: "hi"
 # messages = [
@@ -128,7 +131,7 @@ messages = [
 
 input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
 with torch.cuda.amp.autocast():
-    output_ids = base_model.generate(input_ids.to('cuda'))
+    output_ids = model.generate(input_ids.to('cuda'))
 response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
 
 # Model response: "Hello! How can I assist you today?"
@@ -142,12 +145,12 @@ lora_config = LoraConfig(
     bias="none",
     task_type=TaskType.CAUSAL_LM
 )
-peft_model = get_peft_model(base_model, 
+model = get_peft_model(model, 
                             lora_config)
 
 # peft_model.resize_token_embeddings(len(tokenizer))
 
-peft_model.print_trainable_parameters()
+model.print_trainable_parameters()
 
 # tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
@@ -183,31 +186,52 @@ prompts = formatting_prompts_func(mono_dataset[:10])
 for prompt in prompts:
     print(prompt)
 
+# get time stamp
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
+
 # peft_model.resize_token_embeddings(len(tokenizer))
+log_dir = f"/root/tf-logs/{timestr}"
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 
 training_args = TrainingArguments(
     learning_rate=1e-3, # Higher learning rate than full fine-tuning.
-    num_train_epochs=2,
-    logging_steps=100,
+    # num_train_epochs=1.5,
+    max_steps=200,
+    logging_steps=10,
     output_dir="/root/autodl-tmp/peft_model",
-    logging_dir='/root/autodl-tmp/logs',
-    save_steps=10000,
+    logging_dir=log_dir,
+    save_steps=5000,
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=2,
+    report_to="tensorboard"
 )
 
-data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False, max_length=450)
+data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-peft_model = peft_model.to(device)
+model = model.to(device)
+
+print(model.vocab_size)
 
 trainer = Trainer(
-    model=peft_model,
+    model=model,
     args=training_args,
     train_dataset=mono_dataset,
     tokenizer=tokenizer,
     data_collator=data_collator
 )
+
 with torch.cuda.amp.autocast():
-    trainer.train()
+    try:
+        trainer.train()
+    except torch.cuda.OutOfMemoryError:
+        print("Out of memory error occurred, stopping training...")
+
 
 trainer.model.save_pretrained("/root/autodl-tmp/peft_model_pretrained")
 
-print(pd.DataFrame(trainer.state.log_history))
+#save log history
+log_history = pd.DataFrame(trainer.state.log_history)
+log_history.to_csv(f"/root/autodl-tmp/peft_model_pretrained/log_history.csv", index=False)
