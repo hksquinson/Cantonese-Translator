@@ -17,8 +17,6 @@ from peft import get_peft_model, LoraConfig, TaskType
 
 from tqdm import tqdm
 
-from custom_tokenizers import YueTokenizer
-
 gc.collect()
 torch.cuda.empty_cache()
 
@@ -34,7 +32,7 @@ def load_cantonese_wiki():
             lines = [line.strip() for line in lines]
             lines = [line for line in lines if len(line) > 0]
             lines = [[line[i:i+500] for i in range(0, len(line), 500)] for line in lines]
-            lines = [line for sublist in lines for line in sublist]
+            lines = ["<|startoftext|>" + line + "<|endoftext|>" for sublist in lines for line in sublist]
             return lines
         
     for file in os.listdir(os.path.join(DATA_DIRECTORY, 'Cantonese-Wiki/text')):
@@ -49,7 +47,7 @@ def load_openrice_reviews():
         lines = [line.strip() for line in lines]
         lines = [line for line in lines if len(line) > 0]
         lines = [[line[i:i+500] for i in range(0, len(line), 500)] for line in lines]
-        lines = [line for sublist in lines for line in sublist]
+        lines = ["<|startoftext|>" + line + "<|endoftext|>" for sublist in lines for line in sublist]
         return lines
 
 yue_wiki_lines = load_cantonese_wiki()
@@ -76,7 +74,7 @@ model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
 model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
 
 base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
-tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -197,15 +195,16 @@ if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
 training_args = TrainingArguments(
-    learning_rate=1e-3, # Higher learning rate than full fine-tuning.
-    # num_train_epochs=1.5,
-    max_steps=200,
-    logging_steps=10,
+    learning_rate=3e-4,
+    num_train_epochs=1.5,
+    # max_steps=200,
+    logging_steps=100,
     output_dir="/root/autodl-tmp/peft_model",
     logging_dir=log_dir,
     save_steps=5000,
     per_device_train_batch_size=4,
-    gradient_accumulation_steps=2,
+    gradient_accumulation_steps=1,
+    max_grad_norm = 0.5,
     report_to="tensorboard"
 )
 
