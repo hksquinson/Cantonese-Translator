@@ -197,7 +197,7 @@ if not os.path.exists(log_dir):
 training_args = TrainingArguments(
     learning_rate=3e-4,
     num_train_epochs=1.5,
-    # max_steps=200,
+    # max_steps=2000,
     logging_steps=100,
     output_dir="/root/autodl-tmp/peft_model",
     logging_dir=log_dir,
