@@ -5,6 +5,7 @@
 
 
 import os
+import time
 
 import pandas as pd
 import numpy as np
@@ -49,11 +50,12 @@ for i, line in kfcd_set.iterrows():
     rows.append({'src_lang': 'yue', 'src_text': line['yue'], 'tgt_lang': 'chinese', 'tgt_text': line['chinese']})
 train_df = pd.DataFrame(rows)
 # to a dataset
-train_dataset = Dataset.from_pandas(train_df).shuffle(seed=42)
+train_dataset = Dataset.from_pandas(train_df) #.shuffle(seed=42)
 #print samples from dataset
 #iterate first 10 items of dataset
 for i in range(20):
     print(train_dataset[i])
+print(len(train_dataset))
 
 
 # to a dataset
@@ -110,7 +112,7 @@ model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', r
 # In[6]:
 
 
-tokenizer = YueTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -163,7 +165,7 @@ def formatting_prompts_func(examples):
     output_texts = []
     langMap = {'en': 'English', 'yue': 'Cantonese', 'chinese': 'Mandarin'}
     # print(examples)
-    for i in range(len(examples)):
+    for i in range(len(examples['src_text'])):
         src_lang_abbv = examples['src_lang'][i]
         tgt_lang_abbv = examples['tgt_lang'][i]
         src_lang = langMap[src_lang_abbv]
@@ -174,13 +176,14 @@ def formatting_prompts_func(examples):
         prompt = f"<|im_start|>user\n{src_text}<|im_end|>\n"
         response = f"<|im_start|>assistant\n{tgt_text}<|im_end|>\n"
         output_texts.append(system_prompt + prompt + response)
+    # print(len(output_texts))
     return output_texts
 
 
 # In[10]:
 
 
-prompts = formatting_prompts_func(train_dataset[:20])
+prompts = formatting_prompts_func(train_dataset[:10])
 # for prompt in abc_prompts:
 #     print(prompt)
 for prompt in prompts:
@@ -297,17 +300,24 @@ peft_model.print_trainable_parameters()
 
 # In[19]:
 
+# get time stamp
+timestr = time.strftime("%Y%m%d-%H%M%S")
+
+# peft_model.resize_token_embeddings(len(tokenizer))
+log_dir = f"/root/tf-logs/{timestr}"
+
 
 training_args = TrainingArguments(
     learning_rate=1e-3, # Higher learning rate than full fine-tuning.
-    num_train_epochs=10,
+    num_train_epochs=3,
     # max_steps = 200,
     logging_steps=10,
-    output_dir="/root/peft_model"
+    output_dir="/root/peft_model",
+    logging_dir=log_dir,
 )
 
-response_template = "<|im_start|>assistant\n"
-collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
+# response_template = "<|im_start|>assistant\n"
+# collator = DataCollatorForCompletionOnlyLM(response_template, tokenizer=tokenizer)
 
 trainer = SFTTrainer(
     peft_model,
@@ -315,7 +325,7 @@ trainer = SFTTrainer(
     train_dataset= train_dataset,
     tokenizer=tokenizer,
     formatting_func=formatting_prompts_func,
-    data_collator=collator,
+    # data_collator=collator,
 )
 trainer.train()
 
