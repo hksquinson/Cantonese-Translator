@@ -308,7 +308,7 @@ log_dir = f"/root/tf-logs/{timestr}"
 
 
 training_args = TrainingArguments(
-    learning_rate=1e-3, # Higher learning rate than full fine-tuning.
+    learning_rate=3e-4, 
     num_train_epochs=3,
     # max_steps = 200,
     logging_steps=10,
