@@ -124,7 +124,7 @@ model.load_adapter('/root/autodl-tmp/peft_model_sft')
 
 # %%
 
-def get_messages(sample, src, tgt):
+def get_messages(samples, src, tgt):
     lang_map = {'eng_Latn': 'English', 'yue_Hant': 'Cantonese', 'cmn_Hans': 'Mandarin', 'cmn_Hant': 'Mandarin'}
     def get_prompt(src, tgt, sample):
         src_name = lang_map[src]
@@ -132,11 +132,18 @@ def get_messages(sample, src, tgt):
         system_prompt = f"Translate the given {src_name} words to {tgt_name}."
         user_prompt = sample[src]
         return system_prompt, user_prompt
-    system, user = get_prompt(src, tgt, sample)
-    return [[
-        {"role": "system", "content": system},
-        {"role": "user", "content": user}
-    ]]
+    def prompt_to_message(system, user):
+        return [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user}
+        ]
+    conversations = []
+    for i in range(len(samples)):
+        sample = samples.iloc[i]
+        system_prompt, user_prompt = get_prompt(src, tgt, sample)
+        messages = prompt_to_message(system_prompt, user_prompt)
+        conversations.append(messages)
+    return conversations
 
 # train_samples = abc_train_set.shuffle(seed=10).select(range(20))
 # test_samples = abc_test_set.shuffle(seed=10).select(range(20))
@@ -144,8 +151,15 @@ lang_names = ['eng_Latn', 'cmn_Hans', 'cmn_Hant']
 cantonese_name = 'yue_Hant'
 
 for src in lang_names:
-    print(get_messages(flores_df.iloc[0], src, cantonese_name))
-    print(get_messages(flores_df.iloc[1], cantonese_name, src))
+    conversation_list = []
+    conversation_list.append(get_messages(flores_df.iloc[:5], src, cantonese_name))
+    conversation_list.append(get_messages(flores_df.iloc[:5], cantonese_name, src))
+    conversation_list = [item for sublist in conversation_list for item in sublist]
+    print(len(conversation_list))
+    for conversation in conversation_list:
+        print(conversation)
+    
+
      
 
 
