@@ -116,11 +116,15 @@ base_model = AutoModelForCausalLM.from_pretrained(
     device_map=device,
     torch_dtype='auto',
 )
-pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
-model = pretrained_model.merge_and_unload()
+model = base_model
+# model.load_adapter('/root/autodl-tmp/peft_model_pretrained')
+model.eval()
+
+# pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
+# model = pretrained_model.merge_and_unload().eval()
 # sft_model = PeftModel.from_pretrained(model, '/root/autodl-tmp/peft_model_sft', is_trainable=False)
 # model = sft_model.merge_and_unload().eval()
-model.eval()
+# model.eval()
 
 
 
@@ -228,13 +232,13 @@ for src_lang in LANG_CODES:
     prompts = get_all_prompts(src_lang, YUE_CODE, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/pretrained_only_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
+    with open(f'../model_outputs/base_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
     prompts = get_all_prompts(YUE_CODE, src_lang, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/pretrained_only_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
+    with open(f'../model_outputs/base_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
 
