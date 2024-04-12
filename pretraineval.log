@@ -2,12 +2,5 @@ nohup: ignoring input
 2024-04-12 16:19:08,568 - modelscope - INFO - PyTorch version 2.2.1 Found.
 2024-04-12 16:19:08,569 - modelscope - INFO - Loading ast index from /root/.cache/modelscope/ast_indexer
 2024-04-12 16:19:08,620 - modelscope - INFO - Loading done! Current index file version is 1.13.1, with md5 b5a2c5fe01f7460b3e700a8ce7e6fc94 and a total number of 972 components indexed
-Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:03,  1.83s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.79s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:04<00:00,  1.34s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:04<00:00,  1.46s/it]
-<|im_start|>system
-Translate the given English words into Chinese.<|im_end|>
-<|im_start|>user
-Good morning, how are you?<|im_end|>
-<|im_start|>assistant
 
-早上好，你怎么样？
-  0%|          | 0/1 [00:00<?, ?it/s]
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]ç

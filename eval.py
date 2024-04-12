@@ -196,6 +196,7 @@ def model_output(model, tokenizer, messages, batch_size=16):
         response = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
         responses.append(response)
     responses = [item for sublist in responses for item in sublist]
+    responses = [line.strip().replace('\n', '') for line in responses]
     return responses
 
 # prompts = get_all_prompts('cmn_Hant', 'yue_Hant', flores_df.iloc[:20])
@@ -223,8 +224,10 @@ print(response)
 
 # %%
 # model output test
-model_output(model, tokenizer, [get_prompt('cmn_Hant', 'yue_Hant', flores_df.iloc[0])])
+# test_output = model_output(model, tokenizer, [get_prompt('cmn_Hant', 'yue_Hant', get_all_prompts('cmn_Hant', 'yue_Hant', pd.DataFrame(flores_df.iloc[:10])))])
 
+# %%
+# test_output
 
 # %%
 
