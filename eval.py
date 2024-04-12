@@ -109,16 +109,18 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 #      quantization_config=BitsAndBytesConfig(load_in_8bit=True),
 # 	 trust_remote_code=True 
 # ).eval()
-model = AutoModelForCausalLM.from_pretrained(
-	 model_path,
-	 device_map=device,
-	 torch_dtype=torch.bfloat16,
-	#  quantization_config=BitsAndBytesConfig(load_in_8bit=True),
-	 trust_remote_code=True 
-).eval()
-model.load_adapter('/root/autodl-tmp/peft_model_pretrained')
-model = model.merge_and_unload()
-model.load_adapter('/root/autodl-tmp/peft_model_sft_only')
+# Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
+
+base_model = AutoModelForCausalLM.from_pretrained(
+    model_path,
+    device_map=device,
+    torch_dtype='auto',
+)
+pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
+model = pretrained_model.merge_and_unload()
+# sft_model = PeftModel.from_pretrained(model, '/root/autodl-tmp/peft_model_sft', is_trainable=False)
+# model = sft_model.merge_and_unload().eval()
+model.eval()
 
 
 
@@ -198,9 +200,26 @@ def model_output(model, tokenizer, messages, batch_size=16):
 
 # %% 
 
-# test save file in parent directory
-# with open('../test.txt', 'w') as f:
-#     f.write('test')
+#model output test
+messages = [
+    {"role": "system", "content": "Translate the given English words into Chinese."},
+    {"role": "user", "content": "Good morning, how are you?"},
+]
+
+print(tokenizer.apply_chat_template(conversation=messages, tokenize=False, add_generation_prompt=True, return_tensors='pt'))
+
+
+input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
+output_ids = model.generate(input_ids.to('cuda'))
+response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
+
+# Model response: "Hello! How can I assist you today?"
+print(response)
+
+
+# %%
+# model output test
+model_output(model, tokenizer, [get_prompt('cmn_Hant', 'yue_Hant', flores_df.iloc[0])])
 
 
 # %%
@@ -209,15 +228,17 @@ for src_lang in LANG_CODES:
     prompts = get_all_prompts(src_lang, YUE_CODE, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/sftpretrained_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
+    with open(f'../model_outputs/pretrained_only_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
     prompts = get_all_prompts(YUE_CODE, src_lang, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/sftpretrained_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
+    with open(f'../model_outputs/pretrained_only_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
 
 
 
+
+# %%

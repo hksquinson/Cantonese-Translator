@@ -1,0 +1,14 @@
+nohup: ignoring input
+2024-04-12 15:59:37,440 - modelscope - INFO - PyTorch version 2.2.1 Found.
+2024-04-12 15:59:37,441 - modelscope - INFO - Loading ast index from /root/.cache/modelscope/ast_indexer
+2024-04-12 15:59:37,494 - modelscope - INFO - Loading done! Current index file version is 1.13.1, with md5 b5a2c5fe01f7460b3e700a8ce7e6fc94 and a total number of 972 components indexed
+Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:03,  1.81s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:03<00:01,  1.76s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:04<00:00,  1.32s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:04<00:00,  1.45s/it]
+<|im_start|>system
+Translate the given English words into Chinese.<|im_end|>
+<|im_start|>user
+Good morning, how are you?<|im_end|>
+<|im_start|>assistant
+
+早上好，你好嗎？
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:02<00:00,  2.95s/it]100%|██████████| 1/1 [00:02<00:00,  2.95s/it]
+  0%|          | 0/126 [00:00<?, ?it/s]  1%|          | 1/126 [00:26<55:35, 26.68s/it]  2%|▏         | 2/126 [00:29<26:17, 12.72s/it]  2%|▏         | 3/126 [00:56<39:06, 19.07s/it]  3%|▎         | 4/126 [01:23<44:58, 22.12s/it]  4%|▍         | 5/126 [01:27<31:53, 15.82s/it]  5%|▍         | 6/126 [01:54<38:55, 19.46s/it]  6%|▌         | 7/126 [02:20<43:12, 21.79s/it]  6%|▋         | 8/126 [02:25<32:21, 16.45s/it]  7%|▋         | 9/126 [02:52<38:15, 19.62s/it]  8%|▊         | 10/126 [03:18<42:04, 21.76s/it]
