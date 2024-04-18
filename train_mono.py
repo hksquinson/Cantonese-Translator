@@ -133,9 +133,9 @@ messages = [
 ]
 
 
-input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
+input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt').to(device)
 # with torch.cuda.amp.autocast():
-output_ids = model.generate(input_ids.to(device), max_length=100)
+output_ids = model.generate(input_ids, max_length=100)
 response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
 
 # Model response: "Hello! How can I assist you today?"
