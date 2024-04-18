@@ -14,8 +14,8 @@ from tokenizers.pre_tokenizers import Whitespace
 
 from tqdm import tqdm
 
-PROJ_DIRECTORY = r'/root/autodl-tmp/AIST4010-Cantonese-Translator/'
-DATA_DIRECTORY = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/'
+PROJ_DIRECTORY = r'AIST4010-Cantonese-Translator'
+DATA_DIRECTORY = r'AIST4010-Cantonese-Translator-Data'
 
 yue_tokenizer = Tokenizer(BPE(unk_token="<unk>"))
 special_tokens = ["<unk>", "<|startoftext|>", "<|endoftext|>", "<|im_start|>", "<|im_end|>",

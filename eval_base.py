@@ -19,8 +19,8 @@ from tqdm import tqdm
 
 
 # %%
-model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
+model_path=r'01ai/Yi-6B-Chat'
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
 
 # base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
@@ -55,8 +55,8 @@ model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', r
 # print(response)
 
 # %%
-tokenizer = AutoTokenizer.from_pretrained('/root/autodl-tmp/01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
-base_tokenizer = AutoTokenizer.from_pretrained('/root/autodl-tmp/01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained('01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
+base_tokenizer = AutoTokenizer.from_pretrained('01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 # print(len(tokenizer.vocab))
 # tokenizer = AutoTokenizer.from_pretrained('/root/AIST4010-Cantonese-Translator/tokenizer', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
@@ -68,9 +68,8 @@ base_tokenizer = AutoTokenizer.from_pretrained('/root/autodl-tmp/01ai/Yi-6B-Chat
 # )
 
 # %%
-REPO_DIRECTORY = r'/root/'
-ABC_DICT_PATH = r'autodl-tmp/AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
-FLORES_PATH = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/flores+'
+REPO_DIRECTORY = r''
+FLORES_PATH = r'AIST4010-Cantonese-Translator-Data/flores+'
 
 #print all files in the flores+ directory
 # print(os.listdir(FLORES_PATH))
@@ -80,7 +79,7 @@ def load_flores_dataset():
     column_names = ['cmn_Hans', 'cmn_Hant', 'eng_Latn', 'yue_Hant']
     data_dict = {column: [] for column in column_names}
     for file in files:
-        if file.startswith('.'):
+        if not file.startswith("dev"):
             continue
         data = []
         with open(os.path.join(FLORES_PATH, file), 'r') as f:
@@ -231,17 +230,20 @@ print(response)
 
 # %%
 
+if os.path.exists('model_outputs') == False:
+    os.makedirs('model_outputs')
+
 for src_lang in LANG_CODES:
     prompts = get_all_prompts(src_lang, YUE_CODE, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/base_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
+    with open(f'model_outputs/base_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
     prompts = get_all_prompts(YUE_CODE, src_lang, flores_df)
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
-    with open(f'../model_outputs/base_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
+    with open(f'model_outputs/base_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
 

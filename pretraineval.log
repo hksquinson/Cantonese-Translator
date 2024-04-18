@@ -1,6 +1,0 @@
-nohup: ignoring input
-2024-04-12 16:19:08,568 - modelscope - INFO - PyTorch version 2.2.1 Found.
-2024-04-12 16:19:08,569 - modelscope - INFO - Loading ast index from /root/.cache/modelscope/ast_indexer
-2024-04-12 16:19:08,620 - modelscope - INFO - Loading done! Current index file version is 1.13.1, with md5 b5a2c5fe01f7460b3e700a8ce7e6fc94 and a total number of 972 components indexed
-
-Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]ç
