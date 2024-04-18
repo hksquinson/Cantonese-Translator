@@ -71,15 +71,21 @@ print(np.sum(sentence_lengths))
 print(np.max(sentence_lengths))
 
 model_path=r'01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', local_files_only=True, cache_dir='', revision='master')
 
 base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+# #cuda, mps, cpu
+# device = torch.device('cpu')
+# if torch.cuda.is_available():
+#     device = torch.device('cuda')
+# elif torch.backends.mps.is_available():
+#     device = torch.device('mps')
 
 print("Is CUDA available: ", torch.cuda.is_available())
-print("Current device: ", torch.cuda.current_device())
+# print("Current device: ", torch.cuda.current_device())
 
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
@@ -91,20 +97,20 @@ model = AutoModelForCausalLM.from_pretrained(
 	#  trust_remote_code=True 
 )
 
-for param in model.parameters():
-  param.requires_grad = False  # freeze the model - train adapters later
-  if param.ndim == 1:
-    # cast the small parameters (e.g. layernorm) to fp32 for stability
-    param.data = param.data.to(torch.float32)
+# for param in model.parameters():
+#   param.requires_grad = False  # freeze the model - train adapters later
+#   if param.ndim == 1:
+#     # cast the small parameters (e.g. layernorm) to fp32 for stability
+#     param.data = param.data.to(torch.float32)
 
-model.gradient_checkpointing_enable()  # reduce number of stored activations
-model.enable_input_require_grads()
+# model.gradient_checkpointing_enable()  # reduce number of stored activations
+# model.enable_input_require_grads()
 
-model.resize_token_embeddings(len(tokenizer))
+# model.resize_token_embeddings(len(tokenizer))
 
-class CastOutputToFloat(torch.nn.Sequential):
-  def forward(self, x): return super().forward(x).to(torch.float32)
-model.lm_head = CastOutputToFloat(model.lm_head)
+# class CastOutputToFloat(torch.nn.Sequential):
+#   def forward(self, x): return super().forward(x).to(torch.float32)
+# model.lm_head = CastOutputToFloat(model.lm_head)
 
 # # Prompt content: "hi"
 # messages = [
@@ -128,8 +134,8 @@ messages = [
 
 
 input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-with torch.cuda.amp.autocast():
-    output_ids = model.generate(input_ids.to('cuda'))
+# with torch.cuda.amp.autocast():
+output_ids = model.generate(input_ids.to(device), max_length=100)
 response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
 
 # Model response: "Hello! How can I assist you today?"
@@ -222,11 +228,11 @@ trainer = Trainer(
     data_collator=data_collator
 )
 
-with torch.cuda.amp.autocast():
-    try:
-        trainer.train()
-    except torch.cuda.OutOfMemoryError:
-        print("Out of memory error occurred, stopping training...")
+# with torch.cuda.amp.autocast():
+try:
+    trainer.train()
+except torch.cuda.OutOfMemoryError:
+    print("Out of memory error occurred, stopping training...")
 
 
 trainer.model.save_pretrained("peft_model_pretrained")

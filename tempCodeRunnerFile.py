@@ -1,1 +1,1 @@
-flores+
+print("Current device: ", torch.cuda.current_device())
