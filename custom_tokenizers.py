@@ -1,7 +1,7 @@
 from transformers import LlamaTokenizer, LlamaTokenizerFast, PreTrainedTokenizerFast
 import os
 
-YUE_PATH = '/root/autodl-tmp/AIST4010-Cantonese-Translator/yue_tokenizer/yue_tokenizer.json'
+YUE_PATH = 'AIST4010-Cantonese-Translator/yue_tokenizer/yue_tokenizer.json'
 
 class YueTokenizer(LlamaTokenizerFast):
     def __init__(self, *args, **kwargs):
