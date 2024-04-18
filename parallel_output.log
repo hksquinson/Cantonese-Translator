@@ -1,84 +1,0 @@
-nohup: ignoring input
-2024-04-05 12:17:52,869 - modelscope - INFO - PyTorch version 2.2.1 Found.
-2024-04-05 12:17:52,869 - modelscope - INFO - Loading ast index from /root/.cache/modelscope/ast_indexer
-2024-04-05 12:17:52,901 - modelscope - INFO - Loading done! Current index file version is 1.13.1, with md5 b5a2c5fe01f7460b3e700a8ce7e6fc94 and a total number of 972 components indexed
-{'src_lang': 'yue', 'src_text': '你食緊乜東東啊？', 'tgt_lang': 'en', 'tgt_text': "What's that thing you're eating?"}
-{'src_lang': 'yue', 'src_text': '佢又識關心人，對朋友又疏爽', 'tgt_lang': 'chinese', 'tgt_text': '他又會關心別人，對朋友又大方'}
-{'src_lang': 'chinese', 'src_text': '水嘩地流出來', 'tgt_lang': 'yue', 'tgt_text': '啲水㗾噉流出嚟'}
-{'src_lang': 'en', 'src_text': "It was definitely fake soccer, so that's why the result was like that.", 'tgt_lang': 'yue', 'tgt_text': '肯定係假波嚟，所以結果係噉喇。'}
-{'src_lang': 'yue', 'src_text': '禮拜日公園好擠擁㗎', 'tgt_lang': 'chinese', 'tgt_text': '星期天公園是很擁擠的'}
-{'src_lang': 'yue', 'src_text': '呢件事瓜𠮨藤，藤𠮨瓜，幾複雜吓。', 'tgt_lang': 'en', 'tgt_text': 'The details of this matter are impossible to be separated, and so the matter is rather complicated.'}
-{'src_lang': 'yue', 'src_text': '呢個袋掙到脹卜卜噉', 'tgt_lang': 'chinese', 'tgt_text': '這個口袋撐得脹鼓鼓的'}
-{'src_lang': 'yue', 'src_text': '唔好撻住對鞋', 'tgt_lang': 'chinese', 'tgt_text': '不要趿拉著鞋'}
-{'src_lang': 'chinese', 'src_text': '這本書你正在看著就先讓你看完吧', 'tgt_lang': 'yue', 'tgt_text': '呢本書你睇開就畀你睇埋先啦'}
-{'src_lang': 'chinese', 'src_text': '我已經問過校長！', 'tgt_lang': 'yue', 'tgt_text': '我有問過校長㗎！'}
-{'src_lang': 'yue', 'src_text': '琴姐', 'tgt_lang': 'en', 'tgt_text': 'Miss Kam'}
-{'src_lang': 'yue', 'src_text': '呢部機影日景就冇咩問題，但影夜景就唔好制啦！', 'tgt_lang': 'chinese', 'tgt_text': '這部相機拍日景就沒什麼問題，但是拍夜景就甭想了！'}
-{'src_lang': 'chinese', 'src_text': '行李要收運費', 'tgt_lang': 'yue', 'tgt_text': '行李要收水腳錢'}
-{'src_lang': 'chinese', 'src_text': '我恐怕買得太多了', 'tgt_lang': 'yue', 'tgt_text': '我怕買得多過頭啦'}
-{'src_lang': 'en', 'src_text': 'He does his work so clumsily. How on earth could he offer any help?', 'tgt_lang': 'yue', 'tgt_text': '佢做嘢一嚿飯噉，邊幫得到手啫？'}
-{'src_lang': 'yue', 'src_text': '得閒再去探你', 'tgt_lang': 'chinese', 'tgt_text': '有空再去看你'}
-{'src_lang': 'yue', 'src_text': '淨得呢科未考。', 'tgt_lang': 'en', 'tgt_text': 'Just this one subject is remaining for my examination.'}
-{'src_lang': 'en', 'src_text': 'Shing Mun Reservoir is located in a mountain valley between Kwai Chung and Tai Wai in the central New Territories.', 'tgt_lang': 'yue', 'tgt_text': '城門水塘位於新界中部，喺葵涌同大圍之間嘅山谷。'}
-{'src_lang': 'yue', 'src_text': '我唔係細路仔吖，我唔使你教我點做人', 'tgt_lang': 'chinese', 'tgt_text': '我不是小孩子，用不著你教我怎麼樣做人'}
-{'src_lang': 'en', 'src_text': 'Just as it becomes dim at dawn I must start doing my work.', 'tgt_lang': 'yue', 'tgt_text': '曚曚光我就要開始做工作。'}
-Max length of English sentence in ABC dataset: 326
-Max length of Cantonese sentence in ABC dataset: 72
-Max length of Chinese sentence in KFCD dataset: 43
-Max length of Cantonese sentence in KFCD dataset: 40
-Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]Loading checkpoint shards:  33%|███▎      | 1/3 [00:01<00:02,  1.17s/it]Loading checkpoint shards:  67%|██████▋   | 2/3 [00:02<00:01,  1.12s/it]Loading checkpoint shards: 100%|██████████| 3/3 [00:02<00:00,  1.19it/s]Loading checkpoint shards: 100%|██████████| 3/3 [00:02<00:00,  1.08it/s]
-/root/miniconda3/envs/trans/lib/python3.10/site-packages/trl/trainer/sft_trainer.py:225: UserWarning: You didn't pass a `max_seq_length` argument to the SFTTrainer, this will default to 1024
-  warnings.warn(
-<|im_start|>system
-Translate the given English words into Chinese.<|im_end|>
-<|im_start|>user
-Good morning, how are you?<|im_end|>
-<|im_start|>assistant
-
-早上好，你今天过得怎么样？
-<|im_start|>system
-Translate the given Cantonese words into English.<|im_end|>
-<|im_start|>user
-你食緊乜東東啊？<|im_end|>
-<|im_start|>assistant
-What's that thing you're eating?<|im_end|>
-
-<|im_start|>system
-Translate the given Cantonese words into Mandarin.<|im_end|>
-<|im_start|>user
-佢又識關心人，對朋友又疏爽<|im_end|>
-<|im_start|>assistant
-他又會關心別人，對朋友又大方<|im_end|>
-
-<|im_start|>system
-Translate the given Mandarin words into Cantonese.<|im_end|>
-<|im_start|>user
-水嘩地流出來<|im_end|>
-<|im_start|>assistant
-啲水㗾噉流出嚟<|im_end|>
-
-<|im_start|>system
-Translate the given English words into Cantonese.<|im_end|>
-<|im_start|>user
-It was definitely fake soccer, so that's why the result was like that.<|im_end|>
-<|im_start|>assistant
-肯定係假波嚟，所以結果係噉喇。<|im_end|>
-
-trainable params: 17,825,792 || all params: 6,078,861,312 || trainable%: 0.293242288071467
-Map:   0%|          | 0/59118 [00:00<?, ? examples/s]Map:  17%|█▋        | 10000/59118 [00:00<00:00, 87910.26 examples/s]Map:  39%|███▉      | 23000/59118 [00:00<00:00, 81040.24 examples/s]Map:  56%|█████▌    | 33000/59118 [00:00<00:00, 85083.45 examples/s]Map:  73%|███████▎  | 43000/59118 [00:00<00:00, 87388.21 examples/s]Map:  90%|████████▉ | 53000/59118 [00:00<00:00, 88785.12 examples/s]Map: 100%|██████████| 59118/59118 [00:00<00:00, 87130.14 examples/s]
-/root/miniconda3/envs/trans/lib/python3.10/site-packages/accelerate/accelerator.py:432: FutureWarning: Passing the following arguments to `Accelerator` is deprecated and will be removed in version 1.0 of Accelerate: dict_keys(['dispatch_batches', 'split_batches', 'even_batches', 'use_seedable_sampler']). Please pass an `accelerate.DataLoaderConfiguration` instead: 
-dataloader_config = DataLoaderConfiguration(dispatch_batches=None, split_batches=False, even_batches=True, use_seedable_sampler=True)
-  warnings.warn(
-  0%|          | 0/90 [00:00<?, ?it/s]  1%|          | 1/90 [00:00<00:30,  2.87it/s]  2%|▏         | 2/90 [00:00<00:23,  3.77it/s]  3%|▎         | 3/90 [00:00<00:20,  4.15it/s]  4%|▍         | 4/90 [00:00<00:18,  4.70it/s]  6%|▌         | 5/90 [00:01<00:18,  4.62it/s]  7%|▋         | 6/90 [00:01<00:16,  4.99it/s]  8%|▊         | 7/90 [00:01<00:16,  4.89it/s]  9%|▉         | 8/90 [00:01<00:15,  5.19it/s] 10%|█         | 9/90 [00:01<00:14,  5.41it/s] 11%|█         | 10/90 [00:02<00:15,  5.05it/s]                                                11%|█         | 10/90 [00:02<00:15,  5.05it/s] 12%|█▏        | 11/90 [00:02<00:14,  5.31it/s] 13%|█▎        | 12/90 [00:02<00:14,  5.49it/s] 14%|█▍        | 13/90 [00:02<00:13,  5.75it/s] 16%|█▌        | 14/90 [00:02<00:13,  5.78it/s] 17%|█▋        | 15/90 [00:02<00:13,  5.43it/s] 18%|█▊        | 16/90 [00:03<00:13,  5.53it/s] 19%|█▉        | 17/90 [00:03<00:12,  5.67it/s] 20%|██        | 18/90 [00:03<00:13,  5.26it/s] 21%|██        | 19/90 [00:03<00:14,  4.97it/s] 22%|██▏       | 20/90 [00:03<00:14,  4.91it/s]                                                22%|██▏       | 20/90 [00:03<00:14,  4.91it/s] 23%|██▎       | 21/90 [00:04<00:13,  5.16it/s] 24%|██▍       | 22/90 [00:04<00:13,  4.94it/s] 26%|██▌       | 23/90 [00:04<00:13,  4.89it/s] 27%|██▋       | 24/90 [00:04<00:12,  5.17it/s] 28%|██▊       | 25/90 [00:05<00:14,  4.46it/s] 29%|██▉       | 26/90 [00:05<00:14,  4.54it/s] 30%|███       | 27/90 [00:05<00:13,  4.60it/s] 31%|███       | 28/90 [00:05<00:13,  4.67it/s] 32%|███▏      | 29/90 [00:05<00:12,  5.00it/s] 33%|███▎      | 30/90 [00:06<00:12,  4.88it/s]                                                33%|███▎      | 30/90 [00:06<00:12,  4.88it/s] 34%|███▍      | 31/90 [00:06<00:12,  4.83it/s] 36%|███▌      | 32/90 [00:06<00:11,  5.22it/s] 37%|███▋      | 33/90 [00:06<00:11,  5.07it/s] 38%|███▊      | 34/90 [00:06<00:11,  5.01it/s] 39%|███▉      | 35/90 [00:07<00:11,  4.85it/s] 40%|████      | 36/90 [00:07<00:10,  5.14it/s] 41%|████      | 37/90 [00:07<00:09,  5.34it/s] 42%|████▏     | 38/90 [00:07<00:09,  5.50it/s] 43%|████▎     | 39/90 [00:07<00:09,  5.29it/s] 44%|████▍     | 40/90 [00:07<00:09,  5.48it/s]                                                44%|████▍     | 40/90 [00:07<00:09,  5.48it/s] 46%|████▌     | 41/90 [00:08<00:09,  5.14it/s] 47%|████▋     | 42/90 [00:08<00:08,  5.38it/s] 48%|████▊     | 43/90 [00:08<00:08,  5.54it/s] 49%|████▉     | 44/90 [00:08<00:08,  5.18it/s] 50%|█████     | 45/90 [00:08<00:08,  5.05it/s] 51%|█████     | 46/90 [00:09<00:08,  5.37it/s] 52%|█████▏    | 47/90 [00:09<00:07,  5.52it/s] 53%|█████▎    | 48/90 [00:09<00:08,  5.25it/s] 54%|█████▍    | 49/90 [00:09<00:09,  4.51it/s] 56%|█████▌    | 50/90 [00:09<00:08,  4.93it/s]                                                56%|█████▌    | 50/90 [00:09<00:08,  4.93it/s] 57%|█████▋    | 51/90 [00:10<00:07,  5.18it/s] 58%|█████▊    | 52/90 [00:10<00:07,  5.38it/s] 59%|█████▉    | 53/90 [00:10<00:07,  5.06it/s] 60%|██████    | 54/90 [00:10<00:07,  4.93it/s] 61%|██████    | 55/90 [00:10<00:06,  5.17it/s] 62%|██████▏   | 56/90 [00:11<00:06,  5.36it/s] 63%|██████▎   | 57/90 [00:11<00:05,  5.51it/s] 64%|██████▍   | 58/90 [00:11<00:06,  5.20it/s] 66%|██████▌   | 59/90 [00:11<00:05,  5.38it/s] 67%|██████▋   | 60/90 [00:11<00:05,  5.52it/s]                                                67%|██████▋   | 60/90 [00:11<00:05,  5.52it/s] 68%|██████▊   | 61/90 [00:11<00:05,  5.43it/s] 69%|██████▉   | 62/90 [00:12<00:05,  5.20it/s] 70%|███████   | 63/90 [00:12<00:05,  5.05it/s] 71%|███████   | 64/90 [00:12<00:04,  5.34it/s] 72%|███████▏  | 65/90 [00:12<00:04,  5.05it/s] 73%|███████▎  | 66/90 [00:12<00:04,  4.99it/s] 74%|███████▍  | 67/90 [00:13<00:04,  4.92it/s] 76%|███████▌  | 68/90 [00:13<00:04,  5.17it/s] 77%|███████▋  | 69/90 [00:13<00:04,  4.91it/s] 78%|███████▊  | 70/90 [00:13<00:04,  4.86it/s]                                                78%|███████▊  | 70/90 [00:13<00:04,  4.86it/s] 79%|███████▉  | 71/90 [00:13<00:03,  5.15it/s] 80%|████████  | 72/90 [00:14<00:03,  5.03it/s] 81%|████████  | 73/90 [00:14<00:03,  4.92it/s] 82%|████████▏ | 74/90 [00:14<00:03,  5.18it/s] 83%|████████▎ | 75/90 [00:14<00:03,  4.99it/s] 84%|████████▍ | 76/90 [00:14<00:02,  5.21it/s] 86%|████████▌ | 77/90 [00:15<00:02,  4.98it/s] 87%|████████▋ | 78/90 [00:15<00:02,  4.80it/s] 88%|████████▊ | 79/90 [00:15<00:02,  5.17it/s] 89%|████████▉ | 80/90 [00:15<00:02,  4.46it/s]                                                89%|████████▉ | 80/90 [00:15<00:02,  4.46it/s] 90%|█████████ | 81/90 [00:16<00:01,  4.80it/s] 91%|█████████ | 82/90 [00:16<00:01,  4.73it/s] 92%|█████████▏| 83/90 [00:16<00:01,  4.63it/s] 93%|█████████▎| 84/90 [00:16<00:01,  4.95it/s] 94%|█████████▍| 85/90 [00:16<00:00,  5.21it/s] 96%|█████████▌| 86/90 [00:16<00:00,  5.39it/s] 97%|█████████▋| 87/90 [00:17<00:00,  5.17it/s] 98%|█████████▊| 88/90 [00:17<00:00,  5.37it/s] 99%|█████████▉| 89/90 [00:17<00:00,  5.50it/s]100%|██████████| 90/90 [00:17<00:00,  5.68it/s]                                               100%|██████████| 90/90 [00:17<00:00,  5.68it/s]                                               100%|██████████| 90/90 [00:17<00:00,  5.68it/s]100%|██████████| 90/90 [00:17<00:00,  5.09it/s]
-/root/miniconda3/envs/trans/lib/python3.10/site-packages/peft/utils/save_and_load.py:154: UserWarning: Could not find a config file in /root/autodl-tmp/01ai/Yi-6B-Chat - will assume that the vocabulary was not modified.
-  warnings.warn(
-{'loss': 2.1343, 'grad_norm': 1.1328125, 'learning_rate': 0.0008888888888888888, 'epoch': 0.33}
-{'loss': 1.3125, 'grad_norm': 1.3515625, 'learning_rate': 0.0007777777777777778, 'epoch': 0.67}
-{'loss': 1.2709, 'grad_norm': 0.83984375, 'learning_rate': 0.0006666666666666666, 'epoch': 1.0}
-{'loss': 1.0377, 'grad_norm': 0.8515625, 'learning_rate': 0.0005555555555555556, 'epoch': 1.33}
-{'loss': 1.0565, 'grad_norm': 0.9296875, 'learning_rate': 0.0004444444444444444, 'epoch': 1.67}
-{'loss': 1.0438, 'grad_norm': 0.83984375, 'learning_rate': 0.0003333333333333333, 'epoch': 2.0}
-{'loss': 0.8462, 'grad_norm': 0.71875, 'learning_rate': 0.0002222222222222222, 'epoch': 2.33}
-{'loss': 0.8195, 'grad_norm': 0.9921875, 'learning_rate': 0.0001111111111111111, 'epoch': 2.67}
-{'loss': 0.7757, 'grad_norm': 0.734375, 'learning_rate': 0.0, 'epoch': 3.0}
-{'train_runtime': 17.6948, 'train_samples_per_second': 40.69, 'train_steps_per_second': 5.086, 'train_loss': 1.1441102822621663, 'epoch': 3.0}

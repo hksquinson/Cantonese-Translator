@@ -22,7 +22,7 @@ torch.cuda.empty_cache()
 
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
-DATA_DIRECTORY = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/'
+DATA_DIRECTORY = r'AIST4010-Cantonese-Translator-Data'
 
 def load_cantonese_wiki():
     wiki_lines = []
@@ -70,8 +70,8 @@ print(np.mean(sentence_lengths))
 print(np.sum(sentence_lengths))
 print(np.max(sentence_lengths))
 
-model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
+model_path=r'01ai/Yi-6B-Chat'
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
 
 base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
@@ -84,7 +84,7 @@ print("Current device: ", torch.cuda.current_device())
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 model = AutoModelForCausalLM.from_pretrained(
-	 '/root/autodl-tmp/01ai/Yi-6B-Chat',
+	 '01ai/Yi-6B-Chat',
 	 device_map=device,
 	 torch_dtype='auto',
     #  quantization_config=BitsAndBytesConfig(load_in_8bit=True),
@@ -189,7 +189,7 @@ timestr = time.strftime("%Y%m%d-%H%M%S")
 
 
 # peft_model.resize_token_embeddings(len(tokenizer))
-log_dir = f"/root/tf-logs/{timestr}"
+log_dir = f"tf-logs/{timestr}"
 
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
@@ -197,9 +197,9 @@ if not os.path.exists(log_dir):
 training_args = TrainingArguments(
     learning_rate=3e-4,
     num_train_epochs=1.5,
-    # max_steps=2000,
+    # max_steps=100,
     logging_steps=100,
-    output_dir="/root/autodl-tmp/peft_model",
+    output_dir="peft_model",
     logging_dir=log_dir,
     save_steps=5000,
     per_device_train_batch_size=4,
@@ -229,8 +229,8 @@ with torch.cuda.amp.autocast():
         print("Out of memory error occurred, stopping training...")
 
 
-trainer.model.save_pretrained("/root/autodl-tmp/peft_model_pretrained")
+trainer.model.save_pretrained("peft_model_pretrained")
 
 #save log history
 log_history = pd.DataFrame(trainer.state.log_history)
-log_history.to_csv(f"/root/autodl-tmp/peft_model_pretrained/log_history.csv", index=False)
+log_history.to_csv(f"peft_model_pretrained/log_history.csv", index=False)

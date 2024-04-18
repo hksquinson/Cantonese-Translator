@@ -12,3 +12,7 @@ protobuf
 evaluate
 nltk
 ipykernel
+accelerate
+tqdm
+nltk
+tensorboard

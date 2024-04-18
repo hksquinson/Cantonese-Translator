@@ -27,8 +27,8 @@ from custom_tokenizers import YueTokenizer
 # In[2]:
 
 
-ABC_DICT_PATH = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
-KFCD_DICT_PATH = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/kaifangcidian/kaifangcidian.csv'
+ABC_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
+KFCD_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/kaifangcidian/kaifangcidian.csv'
 
 def load_dataset(path):
     df = pd.read_csv(path)
@@ -89,7 +89,7 @@ print('Max length of Cantonese sentence in KFCD dataset:', max([len(x) for x in 
 # In[4]:
 
 
-model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
+model_path=r'01ai/Yi-6B-Chat'
 
 # model = Model.from_pretrained('01ai/Yi-6B')
 
@@ -106,7 +106,7 @@ model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
 # In[5]:
 
 
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
 
 
 # In[6]:
@@ -304,7 +304,7 @@ peft_model.print_trainable_parameters()
 timestr = time.strftime("%Y%m%d-%H%M%S")
 
 # peft_model.resize_token_embeddings(len(tokenizer))
-log_dir = f"/root/tf-logs/{timestr}"
+log_dir = f"tf-logs/{timestr}"
 
 
 training_args = TrainingArguments(
@@ -312,7 +312,7 @@ training_args = TrainingArguments(
     num_train_epochs=3,
     # max_steps = 200,
     logging_steps=10,
-    output_dir="/root/peft_model",
+    output_dir="peft_model_sft_only_checkpoints",
     logging_dir=log_dir,
 )
 
@@ -331,9 +331,6 @@ trainer.train()
 
 
 # In[ ]:
-
-
-trainer.model.save_pretrained("/root/autodl-tmp/peft_model_sft")
 
 
 # In[ ]:
@@ -375,5 +372,7 @@ trainer.model.save_pretrained("/root/autodl-tmp/peft_model_sft")
 
 # print(pd.DataFrame(trainer.state.log_history))
 #save trainer log history
-pd.DataFrame(trainer.state.log_history).to_csv("/root/autodl-tmp/peft_model_sft/log_history.csv")
+trainer.model.save_pretrained("peft_model_sft_only")
+
+pd.DataFrame(trainer.state.log_history).to_csv("peft_model_sft_only/log_history.csv")
 

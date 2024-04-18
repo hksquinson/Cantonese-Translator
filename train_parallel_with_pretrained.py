@@ -27,8 +27,8 @@ from custom_tokenizers import YueTokenizer
 # In[2]:
 
 
-ABC_DICT_PATH = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
-KFCD_DICT_PATH = r'/root/autodl-tmp/AIST4010-Cantonese-Translator-Data/kaifangcidian/kaifangcidian.csv'
+ABC_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
+KFCD_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/kaifangcidian/kaifangcidian.csv'
 
 def load_dataset(path):
     df = pd.read_csv(path)
@@ -89,7 +89,7 @@ print('Max length of Cantonese sentence in KFCD dataset:', max([len(x) for x in 
 # In[4]:
 
 
-model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
+model_path=r'01ai/Yi-6B-Chat'
 
 # model = Model.from_pretrained('01ai/Yi-6B')
 
@@ -106,7 +106,7 @@ model_path=r'/root/autodl-tmp/01ai/Yi-6B-Chat'
 # In[5]:
 
 
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='/root/autodl-tmp', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
 
 
 # In[6]:
@@ -123,7 +123,7 @@ base_model = AutoModelForCausalLM.from_pretrained(
     device_map=device,
     torch_dtype='auto',
 )
-pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
+pretrained_model = PeftModel.from_pretrained(base_model, 'peft_model_pretrained', is_trainable=False)
 model = pretrained_model.merge_and_unload()
 
 
@@ -307,7 +307,7 @@ peft_model.print_trainable_parameters()
 timestr = time.strftime("%Y%m%d-%H%M%S")
 
 # peft_model.resize_token_embeddings(len(tokenizer))
-log_dir = f"/root/tf-logs/{timestr}"
+log_dir = f"tf-logs/{timestr}"
 
 
 training_args = TrainingArguments(
@@ -315,7 +315,7 @@ training_args = TrainingArguments(
     num_train_epochs=3,
     # max_steps = 200,
     logging_steps=10,
-    output_dir="/root/autodl-tmp/peft_model_sft_checkpoints",
+    output_dir="peft_model_sft_checkpoints",
     logging_dir=log_dir,
 )
 
@@ -336,47 +336,8 @@ trainer.train()
 # In[ ]:
 
 
-trainer.model.save_pretrained("/root/autodl-tmp/peft_model_sft")
+trainer.model.save_pretrained("peft_model_sft")
 
-
-# In[ ]:
-
-
-# #get random data from test dataset
-# for i in range(5):
-#     example = abc_test_set[i]
-#     print(example)
-#     text1 = f"""Translate the following words into Cantonese: 
-#         {example['en']}
-#         """
-#     text2 = f"""Translate the following words into English:
-#         {example['yue']}
-#         """
-#     texts = [text1, text2]
-#     for text in texts:
-#         messages = [
-#             {"role": "user", "content": text}
-#         ]
-#         print(messages)
-#         #print model outputs for base_model and peft_model
-#         base_input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-#         peft_input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-#         print("Base ID:", base_input_ids)
-#         print("Base Input:", base_tokenizer.decode(base_input_ids[base_input_ids.shape[1]:], skip_special_tokens=True))
-#         print("PEFT ID:", peft_input_ids)
-#         print("PEFT Input:", tokenizer.decode(peft_input_ids[peft_input_ids.shape[1]:], skip_special_tokens=True))
-#         print(peft_input_ids)
-#         base_output_ids = base_model.generate(base_input_ids.to('cuda'), max_new_tokens=100)
-#         peft_output_ids = peft_model.generate(peft_input_ids.to('cuda'), max_new_tokens=100)
-#         print(base_output_ids.shape, peft_output_ids.shape)
-#         print("Base model: ", base_tokenizer.decode(base_output_ids[0][base_input_ids.shape[1]:], skip_special_tokens=True))
-#         print("Fine-tuned: ", tokenizer.decode(peft_output_ids[0][peft_input_ids.shape[1]:], skip_special_tokens=True))
-
-
-# In[ ]:
-
-
-# print(pd.DataFrame(trainer.state.log_history))
 #save trainer log history
-pd.DataFrame(trainer.state.log_history).to_csv("/root/autodl-tmp/peft_model_sft/log_history.csv")
+pd.DataFrame(trainer.state.log_history).to_csv("peft_model_sft/log_history.csv")
 
