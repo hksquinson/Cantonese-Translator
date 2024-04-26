@@ -18,7 +18,7 @@ from peft import PeftModel
 
 # %%
 model_path=r'01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
 
 # base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
@@ -34,13 +34,13 @@ messages = [
     {"role": "user", "content": "Translate the following words into English:\n你係邊個？"},
 ]
 
-messages_plain = [
-    """
-    <|im_start|> user
-    hi<|im_end|> 
-    <|im_start|> assistant
-    """
-]
+# messages_plain = [
+#     """
+#     <|im_start|> user
+#     hi<|im_end|> 
+#     <|im_start|> assistant
+#     """
+# ]
 
 
 
@@ -53,8 +53,8 @@ messages_plain = [
 # print(response)
 
 # %%
-tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='', local_files_only=True, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
-base_tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='', local_files_only=True, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_dir, cache_dir='01ai/Yi-6B-Chat', local_files_only=True, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+base_tokenizer = AutoTokenizer.from_pretrained(model_dir, cache_dir='01ai/Yi-6B-Chat', local_files_only=True, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 # %%
 # model = PeftModel.from_pretrained(
@@ -66,21 +66,26 @@ base_tokenizer = AutoTokenizer.from_pretrained(model_path, cache_dir='', local_f
 # %%
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 base_model = AutoModelForCausalLM.from_pretrained(
-	 '01ai/Yi-6B-Chat',
+	 model_dir,
 	 device_map=device,
 	 torch_dtype=torch.bfloat16,
      quantization_config=BitsAndBytesConfig(load_in_8bit=True),
 	 trust_remote_code=True 
 ).eval()
+
 model = AutoModelForCausalLM.from_pretrained(
-	 model_path,
+	 model_dir,
 	 device_map=device,
 	 torch_dtype=torch.bfloat16,
 	 quantization_config=BitsAndBytesConfig(load_in_8bit=True),
 	 trust_remote_code=True 
-).eval()
-model.resize_token_embeddings(len(tokenizer))
-model.load_adapter('/root/autodl-tmp/peft_model_sft')
+)
+
+pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
+model = pretrained_model.merge_and_unload()
+sft_model = PeftModel.from_pretrained(model, '/root/autodl-tmp/peft_model_sft', is_trainable=False)
+model = sft_model.merge_and_unload()
+model.eval()
 
 # %%
 REPO_DIRECTORY = r''
@@ -140,14 +145,14 @@ def model_output(model, tokenizer, messages, name=None):
         for prompt in messages:
                 input_ids = tokenizer.apply_chat_template(conversation=prompt, tokenize=True, add_generation_prompt=True, return_tensors='pt')
                 with torch.cuda.amp.autocast():
-                        output_ids = model.generate(input_ids.to('cuda'), max_new_tokens=100)
+                        output_ids = model.generate(input_ids.to('cuda'), max_new_tokens=200)
                 response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True, max_length=100)
                 # response = tokenizer.decode(output_ids[0], skip_special_tokens=False, max_length=100)
                 # print(output_ids)
                 print(f"{name}:\n{response}\n")
 
 
-print([model_output(base_model, base_tokenizer, get_messages(train_samples[0]), 'Base model'),])
+# print([model_output(base_model, base_tokenizer, get_messages(train_samples[0]), 'Base model'),])
 
 # %%
 def compare_outputs(samples):
@@ -163,35 +168,42 @@ def compare_outputs(samples):
 # compare_outputs(train_samples)
 
 # %%
-model_output(model, tokenizer, get_messages(train_samples[0]), 'Fine-tuned model')
+# model_output(model, tokenizer, get_messages(train_samples[0]), 'Fine-tuned model')
 
 # %%
-compare_outputs(train_samples)
+# compare_outputs(train_samples)
+
+
+# # %%
+# compare_outputs(test_samples)
+
+# # %%
+# messages = [
+#     {"role": "user", "content": "Translate the following words into English:\n乜嘢都係波士決定嘅，打工仔啲人淨係得個知字。\n"},
+# ]
+
+# # get 5 random samples from train and test dataset
+# train_sample = abc_train_set.shuffle(seed=42).select(range(5))
+# test_sample = abc_test_set.shuffle(seed=42).select(range(5))
+
+# en_train_messages = {get_translate_prompt('Cantonese', sentence) for sentence in train_sample['en']}
+# en_test_messages = {get_translate_prompt('Cantonese', sentence) for sentence in test_sample['en']}
+# yue_train_messages = {get_translate_prompt('English', sentence) for sentence in train_sample['yue']}
+# yue_test_messages = {get_translate_prompt('English', sentence) for sentence in test_sample['yue']}
+
+# for messages in [en_train_messages, en_test_messages, yue_train_messages, yue_test_messages]:
+#     for message in messages:
+#         print(message)
 
 
 # %%
-compare_outputs(test_samples)
 
-# %%
+
+#change the user block to test different inputs
 messages = [
-    {"role": "user", "content": "Translate the following words into English:\n乜嘢都係波士決定嘅，打工仔啲人淨係得個知字。\n"},
+    {"role": "system", "content": "Translate the given English words into Cantonese."},
+    {"role": "user", "content": "Good morning! How are you？"},
 ]
-
-# get 5 random samples from train and test dataset
-train_sample = abc_train_set.shuffle(seed=42).select(range(5))
-test_sample = abc_test_set.shuffle(seed=42).select(range(5))
-
-en_train_messages = {get_translate_prompt('Cantonese', sentence) for sentence in train_sample['en']}
-en_test_messages = {get_translate_prompt('Cantonese', sentence) for sentence in test_sample['en']}
-yue_train_messages = {get_translate_prompt('English', sentence) for sentence in train_sample['yue']}
-yue_test_messages = {get_translate_prompt('English', sentence) for sentence in test_sample['yue']}
-
-for messages in [en_train_messages, en_test_messages, yue_train_messages, yue_test_messages]:
-    for message in messages:
-        print(message)
-
-
-# %%
 
 
 # %%

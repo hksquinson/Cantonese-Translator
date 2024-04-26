@@ -27,7 +27,7 @@ DATA_DIRECTORY = r'AIST4010-Cantonese-Translator-Data'
 def load_cantonese_wiki():
     wiki_lines = []
     def load_cantonese_wiki_file(filename='wiki_00'):
-        with open(os.path.join(DATA_DIRECTORY, 'Cantonese-Wiki/text', filename), 'r') as f:
+        with open(os.path.join(DATA_DIRECTORY, 'Cantonese-Wiki/text', filename), 'r', encoding='utf-8') as f:
             lines = f.readlines()
             lines = [line.strip() for line in lines]
             lines = [line for line in lines if len(line) > 0]
@@ -42,7 +42,7 @@ def load_cantonese_wiki():
     return wiki_lines
 
 def load_openrice_reviews():
-    with open(os.path.join(DATA_DIRECTORY, 'openrice/openrice.txt'), 'r') as f:
+    with open(os.path.join(DATA_DIRECTORY, 'openrice/openrice.txt'), 'r', encoding='utf-8') as f:
         lines = f.readlines()
         lines = [line.strip() for line in lines]
         lines = [line for line in lines if len(line) > 0]
@@ -71,10 +71,10 @@ print(np.sum(sentence_lengths))
 print(np.max(sentence_lengths))
 
 model_path=r'01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
 
-base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
-tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+base_tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
@@ -84,7 +84,7 @@ print("Current device: ", torch.cuda.current_device())
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 model = AutoModelForCausalLM.from_pretrained(
-	 '01ai/Yi-6B-Chat',
+	 model_dir,
 	 device_map=device,
 	 torch_dtype='auto',
     #  quantization_config=BitsAndBytesConfig(load_in_8bit=True),

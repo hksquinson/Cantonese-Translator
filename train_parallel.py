@@ -106,20 +106,20 @@ model_path=r'01ai/Yi-6B-Chat'
 # In[5]:
 
 
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
 
 
 # In[6]:
 
 
-tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
 
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 model = AutoModelForCausalLM.from_pretrained(
-    model_path,
+    model_dir,
     device_map=device,
     torch_dtype='auto',
 )

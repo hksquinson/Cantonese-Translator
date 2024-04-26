@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 # %%
 model_path=r'01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master')
+model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
 
 # base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
@@ -55,8 +55,8 @@ model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='', revision='master'
 # print(response)
 
 # %%
-tokenizer = AutoTokenizer.from_pretrained('01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
-base_tokenizer = AutoTokenizer.from_pretrained('01ai/Yi-6B-Chat', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
+tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
+base_tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 # print(len(tokenizer.vocab))
 # tokenizer = AutoTokenizer.from_pretrained('/root/AIST4010-Cantonese-Translator/tokenizer', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
@@ -111,7 +111,7 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 
 base_model = AutoModelForCausalLM.from_pretrained(
-    model_path,
+    model_dir,
     device_map=device,
     torch_dtype='auto',
 )
