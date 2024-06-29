@@ -1,5 +1,6 @@
 # %%
 import os
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -9,7 +10,6 @@ import bitsandbytes
 import accelerate
 from datasets import Dataset
 
-from modelscope import snapshot_download
 import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from transformers import Trainer, TrainingArguments
@@ -18,58 +18,13 @@ from peft import PeftModel
 from tqdm import tqdm
 
 
-# %%
-model_path=r'01ai/Yi-6B-Chat'
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
 
-# base_tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
 
-# base_model = AutoModelForCausalLM.from_pretrained(
-# 	 model_path,
-# 	 device_map='auto',
-# 	 torch_dtype=torch.bfloat16,
-# 	 trust_remote_code=True 
-# ).eval()
 
 # %%
-# messages = [
-#     {"role": "user", "content": "Translate the following words into English:\n你係邊個？"},
-# ]
-
-# messages_plain = [
-#     """
-#     <|im_start|> user
-#     hi<|im_end|> 
-#     <|im_start|> assistant
-#     """
-# ]
-
-
-
-# input_ids = base_tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-# output_ids = base_model.generate(input_ids.to('cuda'))
-# # response = base_tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True, max_length=100)
-# response = base_tokenizer.decode(output_ids[0], skip_special_tokens=False, max_length=100)
-
-# # Model response: "Hello! How can I assist you today?"
-# print(response)
-
-# %%
-tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
-base_tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
-# print(len(tokenizer.vocab))
-# tokenizer = AutoTokenizer.from_pretrained('/root/AIST4010-Cantonese-Translator/tokenizer', use_fast=True, padding_side='left', max_length=512, return_tensors='pt')
-
-# %%
-# model = PeftModel.from_pretrained(
-#     model,
-#    '/root/peft_model',
-#     is_trainable=False
-# )
-
-# %%
+DATA_DIR = Path('../Cantonese-Translator-Data')
 REPO_DIRECTORY = r''
-FLORES_PATH = r'AIST4010-Cantonese-Translator-Data/flores+'
+FLORES_PATH = DATA_DIR / 'flores+'
 
 #print all files in the flores+ directory
 # print(os.listdir(FLORES_PATH))
@@ -78,9 +33,10 @@ def load_flores_dataset():
     files = os.listdir(FLORES_PATH)
     column_names = ['cmn_Hans', 'cmn_Hant', 'eng_Latn', 'yue_Hant']
     data_dict = {column: [] for column in column_names}
-    for file in files:
+    for file in sorted(files):
         if not file.startswith("dev"):
             continue
+        print(file)
         data = []
         with open(os.path.join(FLORES_PATH, file), 'r') as f:
             data = f.readlines()
@@ -101,33 +57,18 @@ flores_dataset = Dataset.from_pandas(flores_df)
 
 # %%
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-# model = AutoModelForCausalLM.from_pretrained(
-# 	 '/root/autodl-tmp/01ai/Yi-6B-Chat',
-# 	 device_map=device,
-# 	 torch_dtype=torch.bfloat16,
-#      quantization_config=BitsAndBytesConfig(load_in_8bit=True),
-# 	 trust_remote_code=True 
-# ).eval()
-# Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
+print(device)
+# %%
+tokenizer = AutoTokenizer.from_pretrained("01-ai/Yi-6B-Chat")
 
 base_model = AutoModelForCausalLM.from_pretrained(
-    model_dir,
+    "01-ai/Yi-6B-Chat",
     device_map=device,
     torch_dtype='auto',
 )
+
 model = base_model
-# model.load_adapter('/root/autodl-tmp/peft_model_pretrained')
 model.eval()
-
-# pretrained_model = PeftModel.from_pretrained(base_model, '/root/autodl-tmp/peft_model_pretrained', is_trainable=False)
-# model = pretrained_model.merge_and_unload().eval()
-# sft_model = PeftModel.from_pretrained(model, '/root/autodl-tmp/peft_model_sft', is_trainable=False)
-# model = sft_model.merge_and_unload().eval()
-# model.eval()
-
-
-
-# def load_flores_dataset():
 
 
 
@@ -184,7 +125,7 @@ prompts = get_all_prompts('cmn_Hant', 'yue_Hant', flores_df.iloc[:3])
 
 # %%
 
-def model_output(model, tokenizer, messages, batch_size=16):
+def model_output(model, tokenizer, messages, batch_size=1):
     responses = []
     for i in tqdm(range(0, len(messages), batch_size)):
         batch = messages[i:i+batch_size]
@@ -217,16 +158,8 @@ input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, 
 output_ids = model.generate(input_ids.to('cuda'))
 response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
 
-# Model response: "Hello! How can I assist you today?"
+# Model response: "早上好，你今天过得怎么样？"
 print(response)
-
-
-# %%
-# model output test
-# test_output = model_output(model, tokenizer, [get_prompt('cmn_Hant', 'yue_Hant', get_all_prompts('cmn_Hant', 'yue_Hant', pd.DataFrame(flores_df.iloc[:10])))])
-
-# %%
-# test_output
 
 # %%
 
@@ -235,12 +168,14 @@ if os.path.exists('model_outputs') == False:
 
 for src_lang in LANG_CODES:
     prompts = get_all_prompts(src_lang, YUE_CODE, flores_df)
+    prompts = prompts[:8]
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
     with open(f'model_outputs/base_{src_lang}_to_{YUE_CODE}.txt', 'w', encoding='utf-8') as f:
         for line in output_lines:
             f.write(f"{line}\n")
     prompts = get_all_prompts(YUE_CODE, src_lang, flores_df)
+    prompts = prompts[:8]
     output_lines = model_output(model, tokenizer, prompts)
     # save to file
     with open(f'model_outputs/base_{YUE_CODE}_to_{src_lang}.txt', 'w', encoding='utf-8') as f:
