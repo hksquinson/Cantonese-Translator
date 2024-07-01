@@ -1,5 +1,5 @@
-./tmp_trainer
-sfttrain.log
-sftonpretrain.log
-temp
-model_outputs
+models/*
+adapters/*
+data/*
+
+*.pyc
