@@ -1,5 +1,7 @@
 models/*
 adapters/*
 data/*
+translated/*
+results/*
 
 *.pyc

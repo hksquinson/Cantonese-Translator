@@ -45,6 +45,9 @@ class CantoneseTranslator:
         
         self.tokenizer = AutoTokenizer.from_pretrained(config.base_model)
         self.device = config.device
+
+        if self.device is None:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
         if config.adapter is not None:
             self.model.load_adapter(config.adapter)
