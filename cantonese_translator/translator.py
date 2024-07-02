@@ -5,9 +5,9 @@ import torch
 
 class TranslationInput(BaseModel):
 
-    src_lang: str = Field(None, description="Source language")
-    tgt_lang: str = Field(None, description="Target language")
-    text: str = Field(None, description="Text to translate")
+    src_lang: str = Field("Cantonese", description="Source language")
+    tgt_lang: str = Field("Cantonese", description="Target language")
+    text: str = Field("", description="Text to translate")
     max_length: int = Field(default=512, description="Maximum length of the generated translation")
 
 class ModelConfig(BaseModel):
@@ -53,12 +53,19 @@ class CantoneseTranslator:
             self.model.load_adapter(config.adapter)
         if config.eval:
             self.model.eval()
-
-
-    def translate_to_cantonese(self, **kwargs):
-
+    
+    def translate(self, **kwargs):
         input_data = TranslationInput(**kwargs)
-        system_message = {"role": "system", "content": f"Translate the given {input_data.src_lang} words into Chinese."}
+
+        # Ensure either src_lang or tgt_lang is Cantonese
+        if input_data.src_lang != "Cantonese" and input_data.tgt_lang != "Cantonese":
+            raise ValueError("Either src_lang or tgt_lang must be 'Cantonese'")
+        elif input_data.src_lang == "Cantonese" and input_data.tgt_lang == "Cantonese":
+            raise ValueError("src_lang and tgt_lang cannot both be 'Cantonese'")
+
+        # Determine translation direction and construct system message
+        system_message = {"role": "system", "content": f"Translate the given {input_data.src_lang} words into {input_data.tgt_lang}."}
+        
         messages = [system_message, {"role": "user", "content": input_data.text}]
 
         input_ids = self.tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
@@ -66,13 +73,18 @@ class CantoneseTranslator:
         response = self.tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
         return response
     
-    def translate_from_cantonese(self, **kwargs):
-
-        input_data = TranslationInput(**kwargs)
-        system_message = {"role": "system", "content": f"Translate the given Chinese words into {input_data.tgt_lang}."}
-        messages = [system_message, {"role": "user", "content": input_data.text}]
-
-        input_ids = self.tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-        output_ids = self.model.generate(input_ids.to(self.device), max_length=input_data.max_length)
-        response = self.tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
-        return response
+    def translate_from_cantonese(self, tgt_lang, text):
+        return self.translate(tgt_lang=tgt_lang, text=text)
+    
+    def translate_to_cantonese(self, src_lang, text):
+        return self.translate(src_lang=src_lang, text=text)
+    
+    def translate_dataset(self, dataset, src_lang, tgt_lang, current_time):
+        language_data = dataset.get_language_data(src_lang)
+        language_data = language_data[:5]
+        dataset_name = dataset.get_name()
+        results = [self.translate(src_lang=src_lang, tgt_lang=tgt_lang, text=line) for line in language_data]
+        path = f"results/{current_time}/{dataset_name}_{src_lang}_to_{tgt_lang}.txt"
+        with open(path, 'w') as f:
+            for result in results:
+                f.write(result + '\n')

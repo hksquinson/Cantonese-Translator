@@ -5,16 +5,43 @@ from pathlib import Path
 from datasets import Dataset
 
 LANG_MAP = {
-    'cmn_Hans': 'Mandarin',
-    'cmn_Hant': 'Taiwan Mandarin',
+    'cmn_Hans': 'Simplified Chinese',
+    'cmn_Hant': 'Traditional Chinese',
     'eng_Latn': 'English',
     'yue_Hant': 'Cantonese'
 }
 
-class FloresDataset(Dataset):
+class ParallelDataset(Dataset):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def get_name(self):
+        return self.__class__.__name__
+    
+    def get_languages(self):
+        return self.column_names
+    
+    def get_language_data(self, language: str):
+        return self[language]
+    
+    def get_parallel_data(self, start_index: int, end_index: int = None):
+        if end_index is None:
+            end_index = start_index + 1
+        return self[start_index:end_index]
+    
+    def get_prompt(self, src_lang, tgt_lang, index):
+        src_name = src_lang
+        tgt_name = tgt_lang
+        system_prompt = f"Translate the given {src_name} words to {tgt_name}."
+        user_prompt = self[src_lang][index]
+        return f"<|im_start|> system {system_prompt} <|im_end|> <|im_start|> user {user_prompt} <|im_end|>"
+    
+    def get_prompts(self, src_lang, tgt_lang, indices):
+        return [self.get_prompt(src_lang, tgt_lang, index) for index in indices]
+
+
+class FloresDataset(ParallelDataset):
 
     @classmethod
     def load_flores_dataset(cls, path: str) -> 'FloresDataset':  
@@ -37,26 +64,6 @@ class FloresDataset(Dataset):
         
         return cls.from_dict(data_dict)
     
-    def get_languages(self):
-        return self.column_names
-    
-    def get_language_data(self, language: str):
-        return self[language]
-    
-    def get_parallel_data(self, start_index: int, end_index: int = None):
-        if end_index is None:
-            end_index = start_index + 1
-        return self[start_index:end_index]
-    
-    def get_prompt(self, src_lang, tgt_lang, index):
-        src_name = src_lang
-        tgt_name = tgt_lang
-        system_prompt = f"Translate the given {src_name} words to {tgt_name}."
-        user_prompt = self[src_lang][index]
-        return f"<|im_start|> system {system_prompt} <|im_end|> <|im_start|> user {user_prompt} <|im_end|>"
-    
-    def get_prompts(self, src_lang, tgt_lang, indices):
-        return [self.get_prompt(src_lang, tgt_lang, index) for index in indices]
 
 if __name__ == "__main__":
     flores_path = Path('data/flores+')
