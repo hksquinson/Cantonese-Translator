@@ -46,6 +46,7 @@ class FloresDataset(ParallelDataset):
     @classmethod
     def load_flores_dataset(cls, path: str) -> 'FloresDataset':  
         files = os.listdir(path)
+        files.sort()
         # column_names = ['cmn_Hans', 'cmn_Hant', 'eng_Latn', 'yue_Hant']
         column_names = LANG_MAP
         data_dict = {column: [] for column in column_names.values()}

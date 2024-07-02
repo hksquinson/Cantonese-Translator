@@ -1,22 +1,23 @@
+from typing import Optional
+
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftModel, PeftConfig
 from pydantic import BaseModel, Field
 import torch
 
-class TranslationInput(BaseModel):
 
-    src_lang: str = Field("Cantonese", description="Source language")
-    tgt_lang: str = Field("Cantonese", description="Target language")
-    text: str = Field("", description="Text to translate")
+class TranslationInput(BaseModel):
+    src_lang: str = Field(default="Cantonese", description="Source language")
+    tgt_lang: str = Field(default="Cantonese", description="Target language")
+    text: str = Field(default="", description="Text to translate")
     max_length: int = Field(default=512, description="Maximum length of the generated translation")
 
 class ModelConfig(BaseModel):
-
-    base_model: str = Field("01-ai/Yi-6B-Chat", description="Base model to use for translation")
-    adapter: str = Field(None, description="Adapter to load")
-    device: str = Field(None, description="Device to use for translation")
-    eval: bool = Field(False, description="Whether to run model in inference mode")
-    quantization: str = Field(None, description="Quantization method: '8bit', '4bit', or None")
+    base_model: str = Field(default="01-ai/Yi-6B-Chat", description="Base model to use for translation")
+    adapter: Optional[str] = Field(default=None, description="Adapter to load")
+    device: Optional[str] = Field(default=None, description="Device to use for translation")
+    eval: bool = Field(default=False, description="Whether to run model in inference mode")
+    quantization: Optional[str] = Field(default=None, description="Quantization method: '8bit', '4bit', or None")
 
 class CantoneseTranslator:
 
