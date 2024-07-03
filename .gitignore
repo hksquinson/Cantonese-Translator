@@ -3,5 +3,6 @@ adapters/*
 data/*
 translated/*
 results/*
+logs/*
 
 *.pyc

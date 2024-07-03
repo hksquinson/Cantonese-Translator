@@ -1,7 +1,8 @@
 from typing import Optional
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from peft import PeftModel, PeftConfig
+from peft import prepare_model_for_kbit_training
+from accelerate import infer_auto_device_map
 from pydantic import BaseModel, Field
 import torch
 
@@ -28,32 +29,36 @@ class CantoneseTranslator:
         # Set up quantization config
         if config.quantization == '8bit':
             quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-            dtype=torch.float16
         elif config.quantization == '4bit':
-            quantization_config = BitsAndBytesConfig(load_in_4bit=True)
-            dtype=torch.float32
+            quantization_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
         else:
             quantization_config = None
-            dtype=torch.float32
+
+        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # device = torch.device(config.device)
 
         # Load the model with quantization if specified
         self.model = AutoModelForCausalLM.from_pretrained(
             config.base_model,
-            device_map=config.device,
-            torch_dtype=dtype,
+            device_map="auto",
+            # torch_dtype=dtype,
             quantization_config=quantization_config
         )
         
         self.tokenizer = AutoTokenizer.from_pretrained(config.base_model)
-        self.device = config.device
+        # self.device = config.device
 
-        if self.device is None:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # if self.device is None:
+        #     self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
         if config.adapter is not None:
             self.model.load_adapter(config.adapter)
+
         if config.eval:
             self.model.eval()
+        elif quantization_config in ["4bit", "8bit"]:
+            self.model = prepare_model_for_kbit_training(self.model)
+
     
     def translate(self, **kwargs):
         input_data = TranslationInput(**kwargs)
@@ -70,7 +75,7 @@ class CantoneseTranslator:
         messages = [system_message, {"role": "user", "content": input_data.text}]
 
         input_ids = self.tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-        output_ids = self.model.generate(input_ids.to(self.device), max_length=input_data.max_length)
+        output_ids = self.model.generate(input_ids.to(self.model.device), max_length=input_data.max_length)
         response = self.tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
         return response
     

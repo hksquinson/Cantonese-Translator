@@ -9,32 +9,31 @@ import time
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 import torch
 import nltk.translate.bleu_score as bleu
 
-
-from modelscope import snapshot_download
 from datasets import Dataset, load_dataset, concatenate_datasets
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
-from peft import get_peft_model, LoraConfig, TaskType
+from peft import get_peft_model, LoraConfig, TaskType, prepare_model_for_kbit_training
 
-from custom_tokenizers import YueTokenizer
+from cantonese_translator import CantoneseTranslator
 
 
 
 # In[2]:
 
-
+DATA_DIR = Path("data")
 ABC_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
-KFCD_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/kaifangcidian/kaifangcidian.csv'
+ABC_DICT_PATH = DATA_DIR / Path("ABC-Dict") / Path("abc_dict.csv")
+KFCD_DICT_PATH = DATA_DIR / Path("kaifangcidian") / Path("kaifangcidian.csv")
 
 def load_dataset(path):
     df = pd.read_csv(path)
     dataset = Dataset.from_pandas(df)
     return dataset
-
 
 
 abc_set = pd.read_csv(ABC_DICT_PATH)
@@ -43,11 +42,11 @@ kfcd_set = pd.read_csv(KFCD_DICT_PATH)
 train_df = pd.DataFrame(columns=['src_lang', 'src_text', 'tgt_lang', 'tgt_text'])
 rows = []
 for i, line in abc_set.iterrows():
-    rows.append({'src_lang': 'en', 'src_text': line['en'], 'tgt_lang': 'yue', 'tgt_text': line['yue']})
-    rows.append({'src_lang': 'yue', 'src_text': line['yue'], 'tgt_lang': 'en', 'tgt_text': line['en']})
+    rows.append({'src_lang': "English", 'src_text': line["English"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
+    rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "English", 'tgt_text': line["English"]})
 for i, line in kfcd_set.iterrows():
-    rows.append({'src_lang': 'chinese', 'src_text': line['chinese'], 'tgt_lang': 'yue', 'tgt_text': line['yue']})
-    rows.append({'src_lang': 'yue', 'src_text': line['yue'], 'tgt_lang': 'chinese', 'tgt_text': line['chinese']})
+    rows.append({'src_lang': "Simplified Chinese", 'src_text': line["Simplified Chinese"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
+    rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "Simplified Chinese", 'tgt_text': line["Simplified Chinese"]})
 train_df = pd.DataFrame(rows)
 # to a dataset
 train_dataset = Dataset.from_pandas(train_df) #.shuffle(seed=42)
@@ -80,70 +79,85 @@ print(len(train_dataset))
 # print(counts/len(abc_train_set))
 
 #print max length of the dataset
-print('Max length of English sentence in ABC dataset:', max([len(x) for x in abc_set['en']]))
-print('Max length of Cantonese sentence in ABC dataset:', max([len(x) for x in abc_set['yue']]))
-print('Max length of Chinese sentence in KFCD dataset:', max([len(x) for x in kfcd_set['chinese']]))
-print('Max length of Cantonese sentence in KFCD dataset:', max([len(x) for x in kfcd_set['yue']]))
+print('Max length of English sentence in ABC dataset:', max([len(x) for x in abc_set["English"]]))
+print('Max length of Cantonese sentence in ABC dataset:', max([len(x) for x in abc_set["Cantonese"]]))
+print('Max length of Chinese sentence in KFCD dataset:', max([len(x) for x in kfcd_set["Simplified Chinese"]]))
+print('Max length of Cantonese sentence in KFCD dataset:', max([len(x) for x in kfcd_set["Cantonese"]]))
 
 
 # In[4]:
 
 
-model_path=r'01ai/Yi-6B-Chat'
+# model_path=r'01ai/Yi-6B-Chat'
 
-# model = Model.from_pretrained('01ai/Yi-6B')
+# # model = Model.from_pretrained('01ai/Yi-6B')
 
+# # model = AutoModelForCausalLM.from_pretrained(
+# #     model_name,
+# #     device_map="auto",
+# #     torch_dtype='auto'
+# # ).eval()
+
+
+# # tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+
+# # In[5]:
+
+
+# model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
+
+
+# # In[6]:
+
+
+# tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
+
+# device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+
+# # Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
 # model = AutoModelForCausalLM.from_pretrained(
-#     model_name,
-#     device_map="auto",
-#     torch_dtype='auto'
-# ).eval()
+#     model_dir,
+#     device_map=device,
+#     torch_dtype='auto',
+# )
 
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-
-# In[5]:
-
-
-model_dir = snapshot_download('01ai/Yi-6B-Chat', cache_dir='01ai/Yi-6B-Chat', revision='master')
-
-
-# In[6]:
-
-
-tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=True, padding_side='right', max_length=512, return_tensors='pt')
-
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-
-
-# Since transformers 4.35.0, the GPT-Q/AWQ model can be loaded using AutoModelForCausalLM.
-model = AutoModelForCausalLM.from_pretrained(
-    model_dir,
-    device_map=device,
-    torch_dtype='auto',
+translator = CantoneseTranslator(
+    base_model="01-ai/Yi-6B-Chat",
+    adapter=None,
+    eval=False,
+    quantization="4bit"
 )
 
 
+# %%
+test_message = "Good morning, how are you?"
+test_result = translator.translate(
+    src_lang="English",
+    tgt_lang="Cantonese",
+    text=test_message
+)
 
-# In[7]:
+print(test_result)
 
+#%%
 
-# Prompt content: "hi"
-messages = [
-    {"role": "system", "content": "Translate the given English words into Chinese."},
-    {"role": "user", "content": "Good morning, how are you?"},
-]
+lora_config = LoraConfig(
+    r=32, # Rank
+    lora_alpha=32,
+    target_modules = ["k_proj", "q_proj", "v_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type=TaskType.CAUSAL_LM
+)
+peft_model = get_peft_model(translator.model, 
+                            lora_config)
 
-print(tokenizer.apply_chat_template(conversation=messages, tokenize=False, add_generation_prompt=True, return_tensors='pt'))
+peft_model.print_trainable_parameters()
 
-
-input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-output_ids = model.generate(input_ids.to('cuda'))
-response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
-
-# Model response: "Hello! How can I assist you today?"
-print(response)
 
 
 # In[8]:
@@ -163,13 +177,10 @@ print(response)
 
 def formatting_prompts_func(examples):
     output_texts = []
-    langMap = {'en': 'English', 'yue': 'Cantonese', 'chinese': 'Mandarin'}
     # print(examples)
     for i in range(len(examples['src_text'])):
-        src_lang_abbv = examples['src_lang'][i]
-        tgt_lang_abbv = examples['tgt_lang'][i]
-        src_lang = langMap[src_lang_abbv]
-        tgt_lang = langMap[tgt_lang_abbv]
+        src_lang = examples['src_lang'][i]
+        tgt_lang = examples['tgt_lang'][i]
         src_text = examples['src_text'][i]
         tgt_text = examples['tgt_text'][i]
         system_prompt = f"<|im_start|>system\nTranslate the given {src_lang} words into {tgt_lang}.<|im_end|>\n"
@@ -180,12 +191,11 @@ def formatting_prompts_func(examples):
     return output_texts
 
 
-# In[10]:
+# %% 
 
+# test formatting_prompts_func
 
 prompts = formatting_prompts_func(train_dataset[:10])
-# for prompt in abc_prompts:
-#     print(prompt)
 for prompt in prompts:
     print(prompt)
 
@@ -204,22 +214,6 @@ for prompt in prompts:
 
 # print(base_model.config)
 
-
-# In[13]:
-
-
-lora_config = LoraConfig(
-    r=32, # Rank
-    lora_alpha=32,
-    target_modules = ["k_proj", "q_proj", "v_proj"],
-    lora_dropout=0.05,
-    bias="none",
-    task_type=TaskType.CAUSAL_LM
-)
-peft_model = get_peft_model(model, 
-                            lora_config)
-
-peft_model.print_trainable_parameters()
 
 
 # **Train Tokenizer**
@@ -304,16 +298,20 @@ peft_model.print_trainable_parameters()
 timestr = time.strftime("%Y%m%d-%H%M%S")
 
 # peft_model.resize_token_embeddings(len(tokenizer))
-log_dir = f"tf-logs/{timestr}"
-
+log_dir = Path(f"logs/peft_model_sft_only_{timestr}")
+adapters_dir = Path(f"adapters/peft_model_sft_only_{timestr}")
 
 training_args = TrainingArguments(
     learning_rate=3e-4, 
     num_train_epochs=3,
-    # max_steps = 200,
+    max_steps=200,
     logging_steps=10,
-    output_dir="peft_model_sft_only_checkpoints",
+    output_dir=adapters_dir,
     logging_dir=log_dir,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=4,
+    save_strategy="steps",
+    save_steps=0.2,
 )
 
 # response_template = "<|im_start|>assistant\n"
@@ -322,9 +320,10 @@ training_args = TrainingArguments(
 trainer = SFTTrainer(
     peft_model,
     args=training_args,
-    train_dataset= train_dataset,
-    tokenizer=tokenizer,
+    train_dataset=train_dataset,
+    tokenizer=translator.tokenizer,
     formatting_func=formatting_prompts_func,
+    max_seq_length=512
     # data_collator=collator,
 )
 trainer.train()
@@ -372,7 +371,7 @@ trainer.train()
 
 # print(pd.DataFrame(trainer.state.log_history))
 #save trainer log history
-trainer.model.save_pretrained("peft_model_sft_only")
+trainer.model.save_pretrained(adapters_dir)
 
-pd.DataFrame(trainer.state.log_history).to_csv("peft_model_sft_only/log_history.csv")
+pd.DataFrame(trainer.state.log_history).to_csv(adapters_dir / Path("trainer_log.csv"), index=False)
 

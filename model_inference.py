@@ -25,7 +25,7 @@ def main():
         eval=True, 
         quantization="8bit"
     )
-    print(translator.device)
+
     print(translator.translate(src_lang="English", text="Hello, how are you?"))
     print(translator.translate(tgt_lang="English", text="食咗飯未？​"))
 
