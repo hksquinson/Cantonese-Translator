@@ -20,70 +20,84 @@ from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
 from peft import get_peft_model, LoraConfig, TaskType, prepare_model_for_kbit_training
 
 from cantonese_translator import CantoneseTranslator
+from cantonese_translator.dataset import ParallelDataset
 
 
 
 # In[2]:
 
-DATA_DIR = Path("data")
-ABC_DICT_PATH = r'AIST4010-Cantonese-Translator-Data/ABC-Dict/abc_dict.csv'
-ABC_DICT_PATH = DATA_DIR / Path("ABC-Dict") / Path("abc_dict.csv")
-KFCD_DICT_PATH = DATA_DIR / Path("kaifangcidian") / Path("kaifangcidian.csv")
+# DATA_DIR = Path("data")
+# ABC_PATH = DATA_DIR / Path("ABC-Dict") / Path("abc_dict.csv")
+# KFCD_PATH = DATA_DIR / Path("kaifangcidian") / Path("kaifangcidian.csv")
 
-def load_dataset(path):
-    df = pd.read_csv(path)
-    dataset = Dataset.from_pandas(df)
-    return dataset
+dataset_paths = [
+    "data/ABC-Dict/abc_dict.csv",
+    "data/kaifangcidian/kaifangcidian.csv"
+]
+
+# def load_dataset(path):
+#     df = pd.read_csv(path)
+#     dataset = Dataset.from_pandas(df)
+#     return dataset
 
 
-abc_set = pd.read_csv(ABC_DICT_PATH)
-kfcd_set = pd.read_csv(KFCD_DICT_PATH)
-# create new pd with 4 columns, src_lang, src_text, tgt_lang, tgt_text
-train_df = pd.DataFrame(columns=['src_lang', 'src_text', 'tgt_lang', 'tgt_text'])
-rows = []
-for i, line in abc_set.iterrows():
-    rows.append({'src_lang': "English", 'src_text': line["English"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
-    rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "English", 'tgt_text': line["English"]})
-for i, line in kfcd_set.iterrows():
-    rows.append({'src_lang': "Simplified Chinese", 'src_text': line["Simplified Chinese"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
-    rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "Simplified Chinese", 'tgt_text': line["Simplified Chinese"]})
-train_df = pd.DataFrame(rows)
+# abc_set = pd.read_csv(ABC_DICT_PATH)
+# kfcd_set = pd.read_csv(KFCD_DICT_PATH)
+# # create new pd with 4 columns, src_lang, src_text, tgt_lang, tgt_text
+# train_df = pd.DataFrame(columns=['src_lang', 'src_text', 'tgt_lang', 'tgt_text'])
+# rows = []
+# for i, line in abc_set.iterrows():
+#     rows.append({'src_lang': "English", 'src_text': line["English"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
+#     rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "English", 'tgt_text': line["English"]})
+# for i, line in kfcd_set.iterrows():
+#     rows.append({'src_lang': "Simplified Chinese", 'src_text': line["Simplified Chinese"], 'tgt_lang': "Cantonese", 'tgt_text': line["Cantonese"]})
+#     rows.append({'src_lang': "Cantonese", 'src_text': line["Cantonese"], 'tgt_lang': "Simplified Chinese", 'tgt_text': line["Simplified Chinese"]})
+# train_df = pd.DataFrame(rows)
+# # to a dataset
+# train_dataset = Dataset.from_pandas(train_df) #.shuffle(seed=42)
+# #print samples from dataset
+# #iterate first 10 items of dataset
+# for i in range(20):
+#     print(train_dataset[i])
+# print(len(train_dataset))
+
+
 # to a dataset
-train_dataset = Dataset.from_pandas(train_df) #.shuffle(seed=42)
-#print samples from dataset
-#iterate first 10 items of dataset
-for i in range(20):
-    print(train_dataset[i])
-print(len(train_dataset))
 
+#%%
+# abc_set = ParallelDataset.load_csv_as_dataset(ABC_PATH)
+# kfcd_set = ParallelDataset.load_csv_as_dataset(KFCD_PATH)
 
-# to a dataset
+# get column names of both sets and combine them
+dataset_list = [load_dataset("csv", data_files=dataset_path) for dataset_path in dataset_paths]
+merged_columns = set()
+for dataset in dataset_list:
+    merged_columns |= set(dataset.column_names)
+print(merged_columns)
 
+for column_name in merged_columns:
+    for dataset in dataset_list:
+        if column_name not in dataset.column_names:
+            dataset[column_name] = None
 
+abc_set = dataset_list[0]['train']
+kfcd_set = dataset_list[1]['train']
 
-
-# In[3]:
-
-
-# def count_dataset_tokens(dataset):
-#     en_count = 0
-#     yue_count = 0
-#     for example in dataset:
-#         en_count += len(example['en'])
-#         yue_count += len(example['yue'])
-#     return en_count, yue_count
-
-
-# counts = np.array(count_dataset_tokens(abc_train_set))
-# print(counts)
-# print(counts/len(abc_train_set))
-
-#print max length of the dataset
 print('Max length of English sentence in ABC dataset:', max([len(x) for x in abc_set["English"]]))
 print('Max length of Cantonese sentence in ABC dataset:', max([len(x) for x in abc_set["Cantonese"]]))
-print('Max length of Chinese sentence in KFCD dataset:', max([len(x) for x in kfcd_set["Simplified Chinese"]]))
+print('Max length of Chinese sentence in KFCD dataset:', max([len(x) for x in kfcd_set["Traditional Chinese"]]))
 print('Max length of Cantonese sentence in KFCD dataset:', max([len(x) for x in kfcd_set["Cantonese"]]))
 
+dataset_list = [dataset['train'] for dataset in dataset_list]
+
+# combine the two datasets
+train_dataset = concatenate_datasets(dataset_list)
+
+for i in range(20):
+    print(train_dataset[i])
+
+print(len(train_dataset))
+# In[3]:
 
 # In[4]:
 

@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from pathlib import Path
 
-from datasets import Dataset
+from datasets import Dataset, load_dataset, concatenate_datasets
 
 LANG_MAP = {
     'cmn_Hans': 'Simplified Chinese',
@@ -15,6 +15,24 @@ class ParallelDataset(Dataset):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def load_from_csv(cls, dataset_paths):
+        dataset_list = [load_dataset("csv", data_files=dataset_path) for dataset_path in dataset_paths]
+        merged_columns = set()
+        for dataset in dataset_list:
+            merged_columns |= set(dataset['train'].column_names)
+
+        for column_name in merged_columns:
+            for dataset in dataset_list:
+                if column_name not in dataset['train'].column_names:
+                    dataset['train'] = dataset['train'].add_column(column_name, [None] * len(dataset['train']))
+
+        dataset_list = [dataset['train'] for dataset in dataset_list]
+        combined_dataset = concatenate_datasets(dataset_list).shuffle(seed=42)
+
+        df = pd.DataFrame(combined_dataset)
+        return cls.from_pandas(df)
 
     def get_name(self):
         return self.__class__.__name__

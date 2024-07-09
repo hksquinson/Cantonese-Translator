@@ -20,14 +20,20 @@ def translate_dataset_column(translator, dataset, lang, from_cantonese, sample_s
     results = [translator.translate(src_lang=src_lang, tgt_lang=tgt_lang, text=line) for line in tqdm(language_data)]
     
     current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    src_lang = src_lang.replace(' ', '_')
     
     if from_cantonese:
         path = f"results/{current_time}_Cantonese_to_{tgt_lang}.txt"
     else:
         path = f"results/{current_time}_{src_lang}_to_Cantonese.txt"
+
+    path = path.replace(' ', '_')
     
     with open(path, 'w') as f:
         for result in results:
+            # remove line breaks
+            result = result.replace('\n', ' ')
             f.write(result + '\n')
 
 def main():

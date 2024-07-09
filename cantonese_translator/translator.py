@@ -34,13 +34,12 @@ class CantoneseTranslator:
         else:
             quantization_config = None
 
-        # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # device = torch.device(config.device)
+        device_map = "auto"
 
         # Load the model with quantization if specified
         self.model = AutoModelForCausalLM.from_pretrained(
             config.base_model,
-            device_map="auto",
+            device_map=device_map,
             # torch_dtype=dtype,
             quantization_config=quantization_config
         )

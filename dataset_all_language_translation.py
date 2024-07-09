@@ -24,8 +24,11 @@ def translate_dataset(translator, dataset, lang, current_time, from_cantonese, s
     else:
         path = f"results/{current_time}/{src_lang}_to_Cantonese.txt"
     
+    path = path.replace(' ', '_')
+    
     with open(path, 'w') as f:
         for result in results:
+            result = result.replace('\n', ' ')
             f.write(result + '\n')
 
 def main():
