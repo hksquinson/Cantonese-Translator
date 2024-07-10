@@ -17,7 +17,7 @@ def translate_dataset(translator, dataset, lang, current_time, from_cantonese, s
     if sample_size:
         language_data = language_data[:sample_size]
 
-    results = [translator.translate(src_lang=src_lang, tgt_lang=tgt_lang, text=line) for line in tqdm(language_data)]
+    results = translator.batch_translate(src_lang=src_lang, tgt_lang=tgt_lang, batch_text=language_data, batch_size=8)
     
     if from_cantonese:
         path = f"results/{current_time}/Cantonese_to_{tgt_lang}.txt"

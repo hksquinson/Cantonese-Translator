@@ -23,4 +23,4 @@ def merge_adapter(base_model_name, adapter, quant, device):
     
 
 if __name__ == "__main__":
-    merge_adapter("01-ai/Yi-6B-Chat", "adapters/*peft_model_sft_only_20240705-111842", "none", "cpu")
+    merge_adapter("01-ai/Yi-6B-Chat", "adapters/*peft_model_sft_only_20240710-084930", "none", "cpu")

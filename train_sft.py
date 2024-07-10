@@ -78,11 +78,10 @@ def formatting_prompts_func(examples):
                 src_text = record[src_lang]
                 tgt_text = record[tgt_lang]
                 if src_text is not None and tgt_text is not None:
-                    system_prompt = f"<|im_start|>system Translate the given {src_lang} words into {tgt_lang}. <|im_end|>"
-                    prompt = f"<|im_start|>user {src_text} <|im_end|>"
-                    response = f"<|im_start|>assistant {tgt_text} <|im_end|>"
+                    system_prompt = f"<|im_start|>system\nTranslate the given {src_lang} words into {tgt_lang}.<|im_end|>\n"
+                    prompt = f"<|im_start|>user\n{src_text}<|im_end|>\n"
+                    response = f"<|im_start|>assistant\n{tgt_text}<|im_end|>\n"
                     output_texts.append(system_prompt + prompt + response)
-    # print(len(output_texts))
     return output_texts
 
 
@@ -120,6 +119,8 @@ def train_sft(train_dataset: ParallelDataset, translator: CantoneseTranslator, p
         save_steps=0.1,
     )
 
+    max_steps = int(max_steps)
+
     if max_steps > 0:
         training_args.max_steps = max_steps
 
@@ -135,6 +136,7 @@ def train_sft(train_dataset: ParallelDataset, translator: CantoneseTranslator, p
 
     trainer.train()
     trainer.model.save_pretrained(adapters_dir)
+
     pd.DataFrame(trainer.state.log_history).to_csv(adapters_dir / Path("trainer_log.csv"), index=False)
 
 def load_data(data_paths):

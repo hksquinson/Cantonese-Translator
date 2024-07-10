@@ -5,12 +5,20 @@ from peft import prepare_model_for_kbit_training
 from accelerate import infer_auto_device_map
 from pydantic import BaseModel, Field
 import torch
+from tqdm import trange
 
 
 class TranslationInput(BaseModel):
     src_lang: str = Field(default="Cantonese", description="Source language")
     tgt_lang: str = Field(default="Cantonese", description="Target language")
     text: str = Field(default="", description="Text to translate")
+    max_length: int = Field(default=512, description="Maximum length of the generated translation")
+
+class BatchTranslationInput(BaseModel):
+    src_lang: str = Field(default="Cantonese", description="Source language")
+    tgt_lang: str = Field(default="Cantonese", description="Target language")
+    batch_text: list[str] = Field(default=[], description="Text to translate")
+    batch_size: int = Field(default=2, description="Batch size for translation")
     max_length: int = Field(default=512, description="Maximum length of the generated translation")
 
 class ModelConfig(BaseModel):
@@ -43,8 +51,10 @@ class CantoneseTranslator:
             # torch_dtype=dtype,
             quantization_config=quantization_config
         )
+
+        padding_side = "left" if config.eval else "right"
         
-        self.tokenizer = AutoTokenizer.from_pretrained(config.base_model)
+        self.tokenizer = AutoTokenizer.from_pretrained(config.base_model, padding_side=padding_side)
         # self.device = config.device
 
         # if self.device is None:
@@ -77,6 +87,33 @@ class CantoneseTranslator:
         output_ids = self.model.generate(input_ids.to(self.model.device), max_length=input_data.max_length)
         response = self.tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
         return response
+    
+    def batch_translate(self, **kwargs):
+
+        input_data = BatchTranslationInput(**kwargs)
+        batch_size = input_data.batch_size
+
+        # Ensure either src_lang or tgt_lang is Cantonese
+        if input_data.src_lang != "Cantonese" and input_data.tgt_lang != "Cantonese":
+            raise ValueError("Either src_lang or tgt_lang must be 'Cantonese'")
+        elif input_data.src_lang == "Cantonese" and input_data.tgt_lang == "Cantonese":
+            raise ValueError("src_lang and tgt_lang cannot both be 'Cantonese'")
+        
+        results = []
+        
+        for i in trange(0, len(input_data.batch_text), batch_size):
+            batch = input_data.batch_text[i:i+batch_size]
+            system_message = {"role": "system", "content": f"Translate the given {input_data.src_lang} words into {input_data.tgt_lang}."}
+            messages = [[system_message, {"role": "user", "content": line}] for line in batch]
+            input_ids = self.tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt', padding=True, padding_side='left')
+            output_ids = self.model.generate(input_ids.to(self.model.device), max_length=input_data.max_length)
+            output_ids = [output_ids[i][input_ids[i].shape[0]:] for i in range(len(output_ids))]
+            response = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+            results.extend(response)
+        
+        return results
+
+        
     
     def translate_from_cantonese(self, tgt_lang, text):
         return self.translate(tgt_lang=tgt_lang, text=text)

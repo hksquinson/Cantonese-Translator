@@ -1,0 +1,1 @@
+python train_sft.py --base_model models/Yi-6B-Chat --data_paths configs/train_data_paths.txt --quant 8bit

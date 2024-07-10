@@ -17,7 +17,7 @@ def translate_dataset_column(translator, dataset, lang, from_cantonese, sample_s
     if sample_size:
         language_data = language_data[:sample_size]
 
-    results = [translator.translate(src_lang=src_lang, tgt_lang=tgt_lang, text=line) for line in tqdm(language_data)]
+    results = translator.batch_translate(src_lang=src_lang, tgt_lang=tgt_lang, batch_text=language_data, batch_size=8)
     
     current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
