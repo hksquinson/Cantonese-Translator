@@ -1,3 +1,17 @@
+python single_line_translation.py --base_model models/\*peft_model_sft_only_20240710-084930_merged/ 
+--lang "Simplified Chinese" --from_cantonese --quant 8bit
+
+python dataset_single_language_translation.py --base_model models/Yi-6B-Chat 
+--adapter adapters/\*peft_model_sft_only_20240710-084930 --dataset_type flores 
+--dataset data/flores+ --lang "Traditional Chinese" --sample_size 32 --from_cantonese --quant 8bit
+
+python dataset_all_language_translation.py --base_model models/\*peft_model_sft_only_20240710-084930_merged/ 
+--dataset data/flores+/ --quant 8bit
+
 python train_sft.py --base_model models/Yi-6B-Chat --data_paths configs/train_data_paths.txt --quant 8bit
 
-python dataset_all_language_translation.py --base_model models/\*peft_model_sft_only_20240710-084930_merged/ --dataset data/flores+/ --sample_size 32 --quant 8bit
+python merge_adapter.py --base_model models/Yi-6B-Chat --adapter adapters/peft_model_sft_only_20240705-110930 
+--model_name merge_sample_model
+
+python model_eval.py --truth_dir data/flores+/evaluation/ground_truth/ --model_output_dir results/peft_2024-07-11_09-41-09/  
+--src_lang "Simplified Chinese" --tgt_lang Cantonese
