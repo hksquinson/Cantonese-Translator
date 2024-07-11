@@ -16,3 +16,4 @@ accelerate
 tqdm
 nltk
 tensorboard
+unbabel-comet

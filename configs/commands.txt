@@ -1,1 +1,3 @@
 python train_sft.py --base_model models/Yi-6B-Chat --data_paths configs/train_data_paths.txt --quant 8bit
+
+python dataset_all_language_translation.py --base_model models/\*peft_model_sft_only_20240710-084930_merged/ --dataset data/flores+/ --sample_size 32 --quant 8bit
