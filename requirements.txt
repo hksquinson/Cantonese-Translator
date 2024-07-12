@@ -1,6 +1,5 @@
 pandas
 numpy
-modelscope
 datasets
 torch
 transformers
@@ -10,8 +9,6 @@ trl
 sentencepiece
 protobuf
 evaluate
-nltk
-ipykernel
 accelerate
 tqdm
 nltk

@@ -5,6 +5,8 @@ python dataset_single_language_translation.py --base_model models/Yi-6B-Chat
 --adapter adapters/\*peft_model_sft_only_20240710-084930 --dataset_type flores 
 --dataset data/flores+ --lang "Traditional Chinese" --sample_size 32 --from_cantonese --quant 8bit
 
+python dataset_single_language_translation.py --base_model models/Yi-6B-Chat  --adapter adapters/\*peft_model_sft_only_20240710-084930 --file data/flores+/dev.yue_Hant --lang "Traditional Chinese" --sample_size 32 --from_cantonese --quant 8bit
+
 python dataset_all_language_translation.py --base_model models/\*peft_model_sft_only_20240710-084930_merged/ 
 --dataset data/flores+/ --quant 8bit
 

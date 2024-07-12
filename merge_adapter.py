@@ -29,6 +29,5 @@ if __name__ == "__main__":
     parser.add_argument('--base_model', type=str, required=True, help='Base model name')
     parser.add_argument('--adapter', type=str, required=True, help='Adapter path')
     parser.add_argument('--model_name', type=str, help='Model name')
-    # merge_adapter("01-ai/Yi-6B-Chat", "adapters/*peft_model_sft_only_20240710-084930", )
     args = parser.parse_args()
     merge_adapter(args.base_model, args.adapter, args.model_name)
