@@ -27,7 +27,7 @@ The following table shows the original results of the base model, SFT model and 
 
 | Translation Pair | Model | BLEU | BERTscore F1 |
 |------------------|-------|------------|--------------|
-| Cantonese → English | Base model | **22.11** | 0.94 |
+| Cantonese → English | **Base model** | **22.11** | **0.94** |
 | | SFT only | 19.00 | 0.93 |
 | | Pretraining + SFT | 18.14 | **0.94** |
 | Cantonese → Mandarin | **Base model** | **26.70** | 0.86 |

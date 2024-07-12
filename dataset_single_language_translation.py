@@ -3,37 +3,6 @@ import datetime
 from cantonese_translator.translator import CantoneseTranslator
 from cantonese_translator.dataset import ParallelDataset, FloresDataset
 
-# def translate_dataset_column(translator, dataset, lang, from_cantonese, sample_size=None):
-#     if from_cantonese:
-#         src_lang, tgt_lang = 'Cantonese', lang 
-#     else:
-#         src_lang, tgt_lang = lang, 'Cantonese'
-
-#     print(f"Translating from {src_lang} to {tgt_lang}")
-#     language_data = dataset.get_language_data(src_lang)
-    
-#     if sample_size:
-#         language_data = language_data[:sample_size]
-
-#     results = translator.batch_translate(src_lang=src_lang, tgt_lang=tgt_lang, batch_text=language_data, batch_size=8)
-    
-#     current_time = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-
-#     src_lang = src_lang.replace(' ', '_')
-    
-#     if from_cantonese:
-#         path = f"results/{current_time}_Cantonese_to_{tgt_lang}.txt"
-#     else:
-#         path = f"results/{current_time}_{src_lang}_to_Cantonese.txt"
-
-#     path = path.replace(' ', '_')
-    
-#     with open(path, 'w') as f:
-#         for result in results:
-#             # remove line breaks
-#             result = result.replace('\n', ' ')
-#             f.write(result + '\n')
-
 def translate_dataset_file(translator, file, lang, from_cantonese, sample_size=None, batch_size=8):
     if from_cantonese:
         src_lang, tgt_lang = 'Cantonese', lang 
