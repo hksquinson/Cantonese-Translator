@@ -1,81 +1,39 @@
-#%%
-import os
-import gc
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import time
+import argparse
+
 from pathlib import Path
 
-import pandas as pd
-import numpy as np
-
 import torch
-
-import bitsandbytes
-from modelscope import snapshot_download
-from datasets import Dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments, Trainer, DataCollatorForLanguageModeling
-from transformers import BitsAndBytesConfig, AdamW
+import pandas as pd
+from transformers import TrainingArguments
 from trl import SFTTrainer
-from peft import get_peft_model, LoraConfig, TaskType
-from tqdm import tqdm
+from peft import get_peft_model, LoraConfig, TaskType, PeftModel
 
 from cantonese_translator import CantoneseTranslator
 from cantonese_translator.dataset import MonolingualDataset
 
-gc.collect()
-torch.cuda.empty_cache()
-
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
-
-DATA_DIRECTORY = Path('data')
-
-# def load_cantonese_wiki():
-#     wiki_lines = []
-#     def load_cantonese_wiki_file(filename='wiki_00'):
-#         cantonese_wiki_file = DATA_DIRECTORY / 'Cantonese-Wiki/text' / filename
-#         with open(cantonese_wiki_file, 'r', encoding='utf-8') as f:
-#             lines = f.readlines()
-#             lines = [line.strip() for line in lines]
-#             lines = [line for line in lines if len(line) > 0]
-#             # lines = [[line[i:i+500] for i in range(0, len(line), 500)] for line in lines]
-#             lines = ["<|startoftext|>" + line + "<|endoftext|>" for line in lines]
-#             return lines
-        
-#     for file in os.listdir(os.path.join(DATA_DIRECTORY, 'Cantonese-Wiki/text')):
-#         curr_lines = load_cantonese_wiki_file(file)
-#         wiki_lines.extend(curr_lines)
-    
-#     return wiki_lines
-
-# def load_openrice_reviews():
-#     openrice_file = DATA_DIRECTORY / 'openrice/openrice.txt'
-#     with open(openrice_file, 'r', encoding='utf-8') as f:
-#         lines = f.readlines()
-#         lines = [line.strip() for line in lines]
-#         lines = [line for line in lines if len(line) > 0]
-#         lines = ["<|startoftext|>" + line + "<|endoftext|>" for line in lines]
-#         return lines
-
-# yue_wiki_lines = load_cantonese_wiki()
-# openrice_lines = load_openrice_reviews()
-
-# print(len(yue_wiki_lines))
-# print(len(openrice_lines))
+# In[2]:
 
 
+# dataset_paths = [
+#     "data/ABC-Dict/abc_dict.csv",
+#     "data/kaifangcidian/kaifangcidian.csv"
+# ]
 
-mono_dataset = MonolingualDataset.load_from_files([DATA_DIRECTORY / 'Cantonese-Wiki/text', DATA_DIRECTORY / 'openrice/openrice.txt'])
+# train_dataset = ParallelDataset.load_from_csv(dataset_paths)
 
-# mono_dataset = mono_dataset.shuffle(seed=42)
+# for i in range(20):
+#     print(train_dataset[i])
 
-# print(len(mono_dataset))
+# print(len(train_dataset))
 
-# #print mean sentence length
-# sentence_lengths = [len(sentence) for sentence in mono_dataset['text']]
-# print(np.mean(sentence_lengths))
-# print(np.sum(sentence_lengths))
-# print(np.max(sentence_lengths))
-
-#%%
+# In[3]:
 
 def get_models(base_model: str, quant: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -105,75 +63,92 @@ def get_models(base_model: str, quant: str):
 
     return translator, peft_model
 
-translator, peft_model = get_models("models/Yi-6B-Chat", "8bit")
+# In[19]:
 
-#%%
+def train_mono(train_dataset: MonolingualDataset, translator: CantoneseTranslator, peft_model: PeftModel, max_steps: int = 0):
+    # get time stamp
+    timestr = time.strftime("%Y%m%d-%H%M%S")
 
-# # Prompt content: "hi"
-# messages = [
-#     {"role": "user", "content": "hi"}
-# ]
+    # peft_model.resize_token_embeddings(len(tokenizer))
+    log_dir = Path(f"logs/peft_model_sft_only_{timestr}")
+    adapters_dir = Path(f"adapters/peft_model_sft_only_{timestr}")
 
+    training_args = TrainingArguments(
+        learning_rate=3e-4, 
+        num_train_epochs=3,
+        # max_steps=200,
+        logging_steps=10,
+        output_dir=adapters_dir,
+        logging_dir=log_dir,
+        per_device_train_batch_size=4,
+        gradient_accumulation_steps=2,
+        save_strategy="steps",
+        save_steps=0.1,
+    )
 
-# input_ids = tokenizer.apply_chat_template(conversation=messages, tokenize=True, add_generation_prompt=True, return_tensors='pt')
-# output_ids = model.generate(input_ids.to('cuda'))
-# response = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
+    max_steps = int(max_steps)
 
-# # Model response: "Hello! How can I assist you today?"
-# print(response)
+    if max_steps > 0:
+        training_args.max_steps = max_steps
 
-# mono_dataset = mono_dataset.map(lambda samples: tokenizer(samples['text']), batched=True)
+    trainer = SFTTrainer(
+        peft_model,
+        args=training_args,
+        train_dataset=train_dataset,
+        tokenizer=translator.tokenizer,
+        max_seq_length=512
+    )
 
-# # Prompt content: "hi"
-# messages = [
-#     {"role": "user", "content": "hi"}
-# ]
-
-translator.translate(src_lang="English", tgt_lang="Cantonese", text="hi")
-
-#%%
-
-# get time stamp
-timestr = time.strftime("%Y%m%d-%H%M%S")
-
-log_dir = Path(f"logs/peft_model_pretrained_{timestr}")
-adapters_dir = Path(f"adapters/peft_model_pretrained_{timestr}")
-
-training_args = TrainingArguments(
-    learning_rate=3e-4,
-    num_train_epochs=1.5,
-    max_steps=200,
-    logging_steps=100,
-    output_dir="peft_model",
-    logging_dir=log_dir,
-    save_steps=5000,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=4,
-    max_grad_norm = 0.5,
-    report_to="tensorboard"
-)
-
-data_collator = DataCollatorForLanguageModeling(tokenizer=translator.tokenizer, mlm=False)
-
-
-
-trainer = Trainer(
-    model=peft_model,
-    args=training_args,
-    train_dataset=mono_dataset,
-    tokenizer=translator.tokenizer,
-    data_collator=data_collator
-)
-
-try:
     trainer.train()
-except torch.cuda.OutOfMemoryError:
-    print("Out of memory error occurred, stopping training...")
+    trainer.model.save_pretrained(adapters_dir)
+
+    pd.DataFrame(trainer.state.log_history).to_csv(adapters_dir / Path("trainer_log.csv"), index=False)
 
 
-trainer.model.save_pretrained("peft_model_pretrained")
+def load_data(data_paths):
+    dataset_paths = []
 
-#save log history
-log_history = pd.DataFrame(trainer.state.log_history)
-log_history.to_csv(f"results/peft_model_pretrained/log_history.csv", index=False)
-# %%
+    with open(data_paths, 'r') as f:
+        dataset_paths = f.readlines()
+        dataset_paths = [line.strip() for line in dataset_paths]
+
+    if len(dataset_paths) == 0:
+        raise ValueError("No dataset paths found in the file")
+
+    train_dataset = MonolingualDataset.load_from_files(dataset_paths)
+    return train_dataset
+
+def main():
+    parser = argparse.ArgumentParser(description="Train on parallel datasets")
+    parser.add_argument("--base_model", required=True, help="Path to the base model")
+    parser.add_argument("--data_paths", required=True, help="File containing paths of training parallel corpuses")
+    parser.add_argument("--max_steps", help="Maximum training steps") 
+    parser.add_argument("--quant", choices=["4bit", "8bit", "none"], default="none", help="Quantization option")
+
+    args = parser.parse_args()
+
+    train_dataset = load_data(args.data_paths)
+
+    translator, peft_model = get_models(args.base_model, args.quant)
+
+    test_message = train_dataset["Cantonese"][0]
+    test_result = translator.translate(
+        src_lang="Cantonese",
+        tgt_lang="English",
+        text=test_message
+    )
+
+    print(test_result)
+
+    max_steps = args.max_steps if args.max_steps else 0
+
+    train_mono(train_dataset, translator, peft_model, max_steps)
+
+    print("Training complete")
+
+
+
+
+
+if __name__ == "__main__":
+    main()
