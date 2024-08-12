@@ -69,15 +69,19 @@ The project is structured as follows:
 
 ### Training
 
-To train the model on parallel data, specify the paths to the data in `configs/train_data_paths.txt` and run the following command:
+To train the model on parallel data, specify the paths to the data in `configs/sft_data_paths.txt` and run the following command:
 
 ```bash
-python train_sft.py --base_model /path/to/base/model --data_paths configs/train_data_paths.txt
+python train_sft.py --base_model /path/to/base/model --data_paths configs/sft_data_paths.txt
 ```
 
 Use `--quant 4bit` or `--quant 8bit` to quantize the model during training.
 
-The code for training on monolingual data will be updated soon. The old code can be found in the `train_mono.py` script.
+To train the model on monolingual data, specify the paths to the data in `configs/mono_data_paths.txt` and run the following command:
+
+```bash
+python train_sft.py --base_model /path/to/base/model --data_paths configs/mono_data_paths.txt
+```
 
 The training scripts produce adapter models in the `adapters` directory. To merge them with a base model, run the following command:
 
@@ -93,7 +97,7 @@ To test the model with an interactive prompt, run the `single_line_translation.p
 python single_line_translation.py --base_model /path/to/base/model --lang "English" --from_cantonese
 ```
 
-If the --from_cantonese flag is not specified, the model will translate from Cantonese to the language specified in the --lang flag. Otherwise, the model will translate from the language specified in the --lang flag to Cantonese.
+If the --from_cantonese flag is specified, the model will translate from Cantonese to the language specified in the --lang flag. Otherwise, the model will translate from the language specified in the --lang flag to Cantonese.
 
 Use `--quant 4bit` or `--quant 8bit` to quantize the model during training.
 

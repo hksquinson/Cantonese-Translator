@@ -4,12 +4,49 @@ from pathlib import Path
 
 from datasets import Dataset, load_dataset, concatenate_datasets
 
+from typing import List
+
 LANG_MAP = {
     'cmn_Hans': 'Simplified Chinese',
     'cmn_Hant': 'Traditional Chinese',
     'eng_Latn': 'English',
     'yue_Hant': 'Cantonese'
 }
+
+def get_lines(file_path: str):
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        lines = [line.strip() for line in lines]
+        lines = [line for line in lines if len(line) > 0]
+        return lines
+
+def get_lines_in_dir(dir: str):
+    lines = []
+    for file in os.listdir(dir):
+        curr_lines = get_lines(os.path.join(dir, file))
+        lines.extend(curr_lines)
+    return lines
+
+class MonolingualDataset(Dataset):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def load_from_files(cls, paths: List[str], max_seq_len: int = 500):
+        lines = []
+        for path in paths:
+            if os.path.isdir(path):
+                curr_lines = get_lines_in_dir(path)
+            else:
+                curr_lines = get_lines(path)
+            curr_lines = [[line[x:x+max_seq_len] for x in range(0, len(line), max_seq_len)] for line in curr_lines]
+            curr_lines = [line for sublist in curr_lines for line in sublist]
+            lines.extend(curr_lines)
+        return cls.from_dict({
+            'text': lines
+        })
+
 
 class ParallelDataset(Dataset):
 
