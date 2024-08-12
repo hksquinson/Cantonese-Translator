@@ -33,13 +33,16 @@ class MonolingualDataset(Dataset):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def load_from_files(cls, paths: List[str]):
+    def load_from_files(cls, paths: List[str], max_seq_len: int = 500):
         lines = []
         for path in paths:
             if os.path.isdir(path):
-                lines.extend(get_lines_in_dir(path))
+                curr_lines = get_lines_in_dir(path)
             else:
-                lines.extend(get_lines(path))
+                curr_lines = get_lines(path)
+            curr_lines = [[line[x:x+max_seq_len] for x in range(0, len(line), max_seq_len)] for line in curr_lines]
+            curr_lines = [line for sublist in curr_lines for line in sublist]
+            lines.extend(curr_lines)
         return cls.from_dict({
             'text': lines
         })

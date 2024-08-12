@@ -15,7 +15,7 @@ def merge_adapter(base_model_name, adapter, model_name = None):
     model = PeftModel.from_pretrained(base_model, adapter)
     model = model.merge_and_unload()
 
-    if model_name == None:
+    if model_name == None or model_name == "":
         model_name = f"{adapter.split('/')[-1]}_merged"
 
     model.save_pretrained(f"models/{model_name}")

@@ -11,8 +11,7 @@ from pathlib import Path
 
 import torch
 import pandas as pd
-from transformers import TrainingArguments
-from trl import SFTTrainer
+from transformers import TrainingArguments, DataCollatorForLanguageModeling, Trainer
 from peft import get_peft_model, LoraConfig, TaskType, PeftModel
 
 from cantonese_translator import CantoneseTranslator
@@ -70,8 +69,10 @@ def train_mono(train_dataset: MonolingualDataset, translator: CantoneseTranslato
     timestr = time.strftime("%Y%m%d-%H%M%S")
 
     # peft_model.resize_token_embeddings(len(tokenizer))
-    log_dir = Path(f"logs/peft_model_sft_only_{timestr}")
-    adapters_dir = Path(f"adapters/peft_model_sft_only_{timestr}")
+    log_dir = Path(f"logs/peft_model_mono_data_{timestr}")
+    adapters_dir = Path(f"adapters/peft_model_mono_data_{timestr}")
+
+    train_examples = train_dataset.map(lambda samples: translator.tokenizer(samples['text']), batched=True)
 
     training_args = TrainingArguments(
         learning_rate=3e-4, 
@@ -80,23 +81,25 @@ def train_mono(train_dataset: MonolingualDataset, translator: CantoneseTranslato
         logging_steps=10,
         output_dir=adapters_dir,
         logging_dir=log_dir,
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=2,
+        per_device_train_batch_size=1,
+        gradient_accumulation_steps=8,
         save_strategy="steps",
         save_steps=0.1,
     )
 
     max_steps = int(max_steps)
 
+    data_collator = DataCollatorForLanguageModeling(tokenizer=translator.tokenizer, mlm=False)
+
     if max_steps > 0:
         training_args.max_steps = max_steps
 
-    trainer = SFTTrainer(
+    trainer = Trainer(
         peft_model,
         args=training_args,
-        train_dataset=train_dataset,
+        train_dataset=train_examples,
         tokenizer=translator.tokenizer,
-        max_seq_length=512
+        data_collator=data_collator
     )
 
     trainer.train()
@@ -131,7 +134,7 @@ def main():
 
     translator, peft_model = get_models(args.base_model, args.quant)
 
-    test_message = train_dataset["Cantonese"][0]
+    test_message = train_dataset["text"][0]
     test_result = translator.translate(
         src_lang="Cantonese",
         tgt_lang="English",
